@@ -5,3 +5,47 @@
 @media(max-width:540px){.connection-chip{font-size:9px;padding:6px 7px}.brand-word{font-size:17px}.hero h1{font-size:43px}.hero-meta{display:grid;grid-template-columns:1fr 1fr}.form-card{padding:16px}.section-topline{gap:9px}.section-topline h2{font-size:16px}.section-topline p{font-size:10px}.text-button{font-size:0;gap:0;padding:8px}.text-button svg{width:15px;height:15px}.three-col,.two-col,.option-editor-grid,.report-grid,.scenario-columns{grid-template-columns:1fr}.three-col .field:last-child{grid-column:auto}.option-editor{padding:15px}.add-option{min-height:120px}.side-column{grid-template-columns:1fr}.quote-card{grid-column:auto}.results-title-row{align-items:flex-start;flex-direction:column}.results-title-row h2{font-size:26px}.report-status-row{align-items:flex-start;flex-direction:column}.assessment-top{flex-wrap:wrap}.assessment-top .status-pill{margin-left:auto}.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.scenario-columns.lower{gap:16px}.empty-steps{align-items:flex-start;flex-direction:column;width:max-content;margin:23px auto 0}.footer{align-items:flex-start;flex-direction:column}.verifier-chip{font-size:8px}}
 
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+
+/* Phase 2 Enhanced Controls */
+.preset-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0;padding:12px 14px;border:1px solid #28372c;border-radius:10px;background:#121a14}
+.preset-label{font:9px var(--mono);color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.preset-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.preset-pill{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #324335;border-radius:6px;background:#17241b;color:#bed2c1;font-size:11px;transition:all .15s}
+.preset-pill:hover,.preset-pill.active{border-color:var(--green);color:var(--green);background:#1a2d1f}
+.clear-pill{border-color:#4a3835;color:#e8a49c;background:#1f1614}
+.clear-pill:hover{border-color:var(--red);color:var(--red);background:#291a18}
+
+/* Prerequisite Checklist */
+.prereq-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.prereq-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #2e3b31;border-radius:6px;background:#101712;font-size:11px}
+.prereq-check{display:grid;place-items:center;width:18px;height:18px;border:1px solid #4a634e;border-radius:4px;background:#162419;cursor:pointer;color:var(--green);flex-shrink:0}
+.prereq-check.checked{background:#234729;border-color:var(--green)}
+.prereq-text{flex:1;min-width:0;color:#c9d7cd}
+.prereq-text.done{text-decoration:line-through;color:#708474}
+
+/* Client validation alert */
+.validation-alert{border:1px solid #71473f;border-radius:10px;background:#261816;padding:14px 16px;margin-top:16px}
+.validation-header{display:flex;align-items:center;gap:8px;color:#f2aba2;font-size:12px;font-weight:600;margin-bottom:8px}
+.validation-list{margin:0;padding-left:18px;color:#e8b5af;font-size:11px;line-height:1.7}
+
+/* Facts & Assumptions Panel */
+.facts-assumptions-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.fact-card{padding:14px;border:1px solid #29382d;border-radius:9px;background:#101813}
+.fact-card h4{margin:0 0 8px;font:600 11px var(--mono);color:#92c497;letter-spacing:.8px;text-transform:uppercase}
+
+/* Comparison Matrix Table */
+.comparison-table-wrapper{overflow-x:auto;margin-top:16px;border:1px solid #28372c;border-radius:10px}
+.comparison-table{width:100%;border-collapse:collapse;font-size:11px;text-align:left}
+.comparison-table th{background:#17221a;color:#9cb5a0;font:9px var(--mono);letter-spacing:1px;text-transform:uppercase;padding:11px 13px;border-bottom:1px solid #2a3a2e}
+.comparison-table td{padding:12px 13px;border-bottom:1px solid #1e2b21;color:#cddad0}
+.comparison-table tr:last-child td{border-bottom:none}
+.comparison-table tr:hover td{background:#131c15}
+.badge-cell{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:3px 7px;border-radius:4px;border:1px solid #334937;background:#152418;color:#a2d6a9}
+.badge-cell.conflict{border-color:#653c38;background:#261715;color:#f09d94}
+.badge-cell.unknown{border-color:#5c4c31;background:#241f14;color:#dec58d}
+
+/* What-If Tweaks Banner */
+.whatif-banner{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 17px;border:1px solid #38553f;border-radius:10px;background:#142318;margin-top:16px}
+.whatif-left{display:flex;align-items:center;gap:10px}
+.whatif-btn{display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #a3d7aa;border-radius:7px;background:var(--green);color:#122316;font-size:11px;font-weight:700}

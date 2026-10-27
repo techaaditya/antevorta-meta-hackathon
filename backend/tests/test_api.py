@@ -57,3 +57,45 @@ def test_analysis_rate_limit_is_enforced(monkeypatch):
     assert first.status_code == 200
     assert second.status_code == 429
     main._analysis_timestamps.clear()
+
+
+def test_meta_status():
+    response = client.get("/api/meta-status")
+    assert response.status_code == 200
+    data = response.json()
+    assert "configured" in data
+    assert "message" in data
+
+
+def test_analyze_full_response_structure(monkeypatch):
+    monkeypatch.setattr("backend.app.main.MODEL_API_KEY", "")
+    p = payload()
+    p["options"][0]["prerequisites"] = ["[x] Verified contract", "Obtain equipment"]
+    response = client.post("/api/analyze", json=p)
+    assert response.status_code == 200
+    body = response.json()
+    assert "constraints" in body
+    constraints = body["constraints"]
+    assert "known_facts" in constraints
+    assert "user_assumptions" in constraints
+    assert len(constraints["known_facts"]) > 0
+    assert len(constraints["user_assumptions"]) > 0
+
+    first_opt = constraints["option_assessments"][0]
+    assert "Verified contract" in first_opt["verified_prerequisites"]
+    assert "Obtain equipment" in first_opt["prerequisites_to_verify"]
+    assert "breakeven_monthly_surplus_npr" in first_opt
+
+
+def test_analyze_rejects_negative_costs():
+    p = payload()
+    p["options"][0]["upfront_cost_npr"] = -500
+    response = client.post("/api/analyze", json=p)
+    assert response.status_code == 422
+
+
+def test_analyze_rejects_empty_question():
+    p = payload()
+    p["question"] = "Short"
+    response = client.post("/api/analyze", json=p)
+    assert response.status_code == 422
