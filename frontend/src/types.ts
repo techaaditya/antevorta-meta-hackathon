@@ -37,6 +37,9 @@ export type OptionAssessment = {
   projected_budget_headroom_npr: number | null;
   missing_fields: string[];
   prerequisites_to_verify: string[];
+  verified_prerequisites?: string[];
+  runway_months?: number | null;
+  breakeven_monthly_surplus_npr?: number | null;
   explanation: string;
 };
 
@@ -47,6 +50,8 @@ export type ConstraintReport = {
   option_assessments: OptionAssessment[];
   missing_inputs: string[];
   important_unknowns: string[];
+  known_facts?: string[];
+  user_assumptions?: string[];
   arithmetic_policy: string;
 };
 

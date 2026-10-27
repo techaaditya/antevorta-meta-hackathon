@@ -72,6 +72,9 @@ class OptionAssessment(StrictModel):
     projected_budget_headroom_npr: float | None
     missing_fields: list[str]
     prerequisites_to_verify: list[str]
+    verified_prerequisites: list[str] = Field(default_factory=list)
+    runway_months: float | None = None
+    breakeven_monthly_surplus_npr: float | None = None
     explanation: str
 
 
@@ -82,6 +85,8 @@ class ConstraintReport(StrictModel):
     option_assessments: list[OptionAssessment]
     missing_inputs: list[str]
     important_unknowns: list[str]
+    known_facts: list[str] = Field(default_factory=list)
+    user_assumptions: list[str] = Field(default_factory=list)
     arithmetic_policy: str = "All displayed quantities come from supplied inputs and deterministic arithmetic. Missing inputs are unknown, never zero."
 
 
