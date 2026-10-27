@@ -9,7 +9,8 @@ The supplied master product documents predate the hackathon build. The submissio
 
 | Date (NPT) | Commit / PR | New work completed | Test / evidence | Known limitation |
 |---|---|---|---|---|
-| YYYY-MM-DD | `git-sha` | Describe only work actually done | Test command, screenshot or demo timecode | State anything not verified |
+| 2026-10-27 | baseline | Phase 0: Repository audit, environment verification, generated frontend lockfile, verified backend pytest (19 passed) and frontend Vite/TypeScript production build. | `pytest` (19 passed); `npm run build` (tsc + vite build passed); `python -m compileall` passed. | Live Meta API key not yet configured in local environment; local deterministic fallback mode verified. |
+
 
 ## Demo build manifest
 
