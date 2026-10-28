@@ -104,3 +104,29 @@ export type RecalculateResponse = {
   updated_constraints: ConstraintReport;
   diff: RecalculateDiff;
 };
+
+
+export type SavedDecisionSummary = {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  revision_count: number;
+  latest_version: number;
+};
+
+export type DecisionRevisionItem = {
+  id: string;
+  version_number: number;
+  payload: DecisionInput;
+  analysis_result: AnalysisResponse;
+  created_at: string;
+};
+
+export type SavedDecisionDetail = {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  revisions: DecisionRevisionItem[];
+};

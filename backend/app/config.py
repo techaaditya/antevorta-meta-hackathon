@@ -20,6 +20,7 @@ META_MAX_TOOL_TURNS = max(1, min(int(os.getenv("META_MAX_TOOL_TURNS", "4")), 5))
 META_MAX_TOOL_CALLS = max(1, min(int(os.getenv("META_MAX_TOOL_CALLS", "8")), 10))
 APP_ENV = os.getenv("APP_ENV", "development").strip().lower()
 MAX_ANALYSES_PER_MINUTE = max(1, min(int(os.getenv("MAX_ANALYSES_PER_MINUTE", "20")), 300))
+DATABASE_PATH = os.getenv("DATABASE_PATH", str(ROOT_DIR / "antevorta.db")).strip()
 CORS_ORIGINS = [
     origin.strip()
     for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")

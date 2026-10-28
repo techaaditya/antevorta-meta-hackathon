@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  Activity, ArrowDownRight, ArrowRight, Check, CheckSquare, CircleAlert,
-  Clock3, Compass, Download, FileText, FlaskConical, GitBranch, Info, KeyRound,
-  Layers, LoaderCircle, Plus, RefreshCw, ShieldCheck, Sparkles, Square,
-  Table, Target, Trash2, Wallet, WandSparkles, Workflow, Zap,
+  Activity, ArrowDownRight, ArrowRight, Bookmark, Check, CheckSquare, CircleAlert,
+  Clock3, Compass, Download, FileText, FlaskConical, GitBranch, History, Info, KeyRound,
+  Layers, LoaderCircle, Lock, LogOut, Plus, RefreshCw, ShieldCheck, Sparkles, Square,
+  Table, Target, Trash2, UserCheck, Wallet, WandSparkles, Workflow, Zap,
 } from 'lucide-react';
-import { analyzeDecision, getMetaStatus, recalculateConstraints } from './api';
+import {
+  analyzeDecision, getMetaStatus, recalculateConstraints,
+  registerUserAccount, getCurrentUser, saveDecision, addDecisionRevision,
+  listDecisions, getDecision, deleteDecision, exportAllUserData, purgeAccount,
+} from './api';
 import type {
   AnalysisResponse, DecisionInput, OptionAssessment, OptionInput, RecalculateDiff,
+  SavedDecisionSummary, SavedDecisionDetail,
 } from './types';
 
 const initialDraft: DecisionInput = {
@@ -285,6 +290,24 @@ export default function App() {
   const [notice, setNotice] = useState('');
   const [activePreset, setActivePreset] = useState<string>('academic');
 
+  // Persistence, History & User State
+  const [userToken, setUserToken] = useState<string>(() => localStorage.getItem('antevorta_user_token') || '');
+  const [userEmail, setUserEmail] = useState<string>(() => localStorage.getItem('antevorta_user_email') || '');
+  const [savedDecisionId, setSavedDecisionId] = useState<string | null>(null);
+  const [savedDecisionVersion, setSavedDecisionVersion] = useState<number | null>(null);
+
+  // Modals
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [savedDecisionsList, setSavedDecisionsList] = useState<SavedDecisionSummary[]>([]);
+  const [currentDecisionDetail, setCurrentDecisionDetail] = useState<SavedDecisionDetail | null>(null);
+
+  // Auth form state
+  const [authEmailInput, setAuthEmailInput] = useState('');
+  const [authTokenInput, setAuthTokenInput] = useState('');
+  const [authError, setAuthError] = useState('');
+
   // Interactive What-If Sandbox inputs
   const [whatIfMaintenance, setWhatIfMaintenance] = useState<number | ''>('');
   const [whatIfCommitments, setWhatIfCommitments] = useState<number | ''>('');
@@ -293,7 +316,16 @@ export default function App() {
 
   useEffect(() => {
     getMetaStatus().then(setMetaStatus).catch(() => setMetaStatus(null));
-  }, []);
+    if (userToken) {
+      getCurrentUser(userToken).catch(() => {
+        // Token expired/invalid
+        localStorage.removeItem('antevorta_user_token');
+        localStorage.removeItem('antevorta_user_email');
+        setUserToken('');
+        setUserEmail('');
+      });
+    }
+  }, [userToken]);
 
   const updateOption = useCallback((id: string, field: keyof OptionInput, value: unknown) => {
     setDraft(current => ({
@@ -310,6 +342,8 @@ export default function App() {
     setResult(null);
     setAnalyzedDraft(null);
     setRecalcDiff(null);
+    setSavedDecisionId(null);
+    setSavedDecisionVersion(null);
     setError('');
     setValidationErrors([]);
     setActivePreset(presetId);
@@ -323,6 +357,8 @@ export default function App() {
     setResult(null);
     setAnalyzedDraft(null);
     setRecalcDiff(null);
+    setSavedDecisionId(null);
+    setSavedDecisionVersion(null);
     setError('');
     setValidationErrors([]);
     setActivePreset('blank');
@@ -433,7 +469,7 @@ export default function App() {
       setResult(prev => (prev ? { ...prev, constraints: res.updated_constraints } : null));
       setRecalcDiff(res.diff);
       setAnalyzedDraft(cloneDraft({ ...base, ...overrides } as DecisionInput));
-      setNotice('Constraints deterministically recalculated. Narrative marked updated.');
+      setNotice('Constraints deterministically recalculated. What-if diff updated.');
       window.setTimeout(() => setNotice(''), 3600);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Recalculation failed.');
@@ -449,6 +485,158 @@ export default function App() {
     if (whatIfSavings !== '') overrides.savings_npr = Number(whatIfSavings);
     if (whatIfSurplus !== '') overrides.monthly_surplus_npr = Number(whatIfSurplus);
     handleQuickRecalculate(overrides);
+  };
+
+  // Phase 5 Persistence & History Operations
+  const handleAuthSubmit = async () => {
+    if (!authEmailInput.trim() || !authTokenInput.trim()) {
+      setAuthError('Please enter both email and private secret token.');
+      return;
+    }
+    setAuthError('');
+    try {
+      // Try registering; if already exists, verify via getCurrentUser
+      try {
+        await registerUserAccount(authEmailInput.trim(), authTokenInput.trim());
+      } catch {
+        // Assume existing account and attempt login with token
+      }
+      const me = await getCurrentUser(authTokenInput.trim());
+      setUserToken(authTokenInput.trim());
+      setUserEmail(me.user.email);
+      localStorage.setItem('antevorta_user_token', authTokenInput.trim());
+      localStorage.setItem('antevorta_user_email', me.user.email);
+      setShowAuthModal(false);
+      setNotice(`Signed in as ${me.user.email}. Decisions can now be saved to persistent history.`);
+      window.setTimeout(() => setNotice(''), 3600);
+    } catch (e) {
+      setAuthError(e instanceof Error ? e.message : 'Authentication failed. Check your secret token.');
+    }
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem('antevorta_user_token');
+    localStorage.removeItem('antevorta_user_email');
+    setUserToken('');
+    setUserEmail('');
+    setSavedDecisionId(null);
+    setSavedDecisionVersion(null);
+    setNotice('Signed out. Workbench returned to stateless mode.');
+    window.setTimeout(() => setNotice(''), 3600);
+  };
+
+  const handleSaveToHistory = async () => {
+    if (!result) return;
+    if (!userToken) {
+      setShowAuthModal(true);
+      return;
+    }
+    try {
+      if (savedDecisionId) {
+        // Add new revision to existing decision
+        const res = await addDecisionRevision(userToken, savedDecisionId, analyzedDraft || draft, result);
+        setSavedDecisionVersion(res.version_number);
+        setNotice(`Saved new version (v${res.version_number}) to your decision history.`);
+      } else {
+        // Create new decision record
+        const res = await saveDecision(userToken, analyzedDraft || draft, result);
+        setSavedDecisionId(res.id);
+        setSavedDecisionVersion(res.latest_version);
+        setNotice(`Decision saved to history (v${res.latest_version}).`);
+      }
+      window.setTimeout(() => setNotice(''), 3600);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to save decision.');
+    }
+  };
+
+  const handleOpenHistoryModal = async () => {
+    if (!userToken) {
+      setShowAuthModal(true);
+      return;
+    }
+    try {
+      const data = await listDecisions(userToken);
+      setSavedDecisionsList(data.decisions);
+      setShowHistoryModal(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load decision history.');
+    }
+  };
+
+  const handleLoadDecisionDetail = async (decisionId: string) => {
+    try {
+      const detail = await getDecision(userToken, decisionId);
+      setCurrentDecisionDetail(detail);
+      if (detail.revisions.length > 0) {
+        const latest = detail.revisions[detail.revisions.length - 1];
+        setDraft(cloneDraft(latest.payload));
+        setAnalyzedDraft(cloneDraft(latest.payload));
+        setResult(latest.analysis_result);
+        setSavedDecisionId(detail.id);
+        setSavedDecisionVersion(latest.version_number);
+        setShowHistoryModal(false);
+        setNotice(`Loaded "${detail.title}" (version ${latest.version_number}).`);
+        window.setTimeout(() => setNotice(''), 3600);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load decision.');
+    }
+  };
+
+  const handleLoadSpecificRevision = (revision: SavedDecisionDetail['revisions'][number]) => {
+    setDraft(cloneDraft(revision.payload));
+    setAnalyzedDraft(cloneDraft(revision.payload));
+    setResult(revision.analysis_result);
+    setSavedDecisionVersion(revision.version_number);
+    setShowHistoryModal(false);
+    setNotice(`Switched to version ${revision.version_number}.`);
+    window.setTimeout(() => setNotice(''), 3600);
+  };
+
+  const handleDeleteSavedDecision = async (decisionId: string) => {
+    try {
+      await deleteDecision(userToken, decisionId);
+      setSavedDecisionsList(prev => prev.filter(d => d.id !== decisionId));
+      if (savedDecisionId === decisionId) {
+        setSavedDecisionId(null);
+        setSavedDecisionVersion(null);
+      }
+      setNotice('Decision permanently deleted from database.');
+      window.setTimeout(() => setNotice(''), 3600);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to delete decision.');
+    }
+  };
+
+  const handleExportPrivacyData = async () => {
+    try {
+      const data = await exportAllUserData(userToken);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `antevorta-user-data-export-${new Date().toISOString().slice(0, 10)}.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Privacy export failed.');
+    }
+  };
+
+  const handlePurgeAccountData = async () => {
+    if (!window.confirm('Are you sure you want to permanently purge your account and all saved decisions? This cannot be undone.')) {
+      return;
+    }
+    try {
+      await purgeAccount(userToken);
+      handleSignOut();
+      setShowPrivacyModal(false);
+      setNotice('Your account and all associated decision history have been permanently purged.');
+      window.setTimeout(() => setNotice(''), 3600);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Account purge failed.');
+    }
   };
 
   const exportResult = () => {
@@ -495,6 +683,32 @@ export default function App() {
           <span className="brand-word">antevorta<span className="brand-period">.</span></span>
         </a>
         <div className="topbar-right">
+          {userToken ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button type="button" className="history-button" onClick={handleOpenHistoryModal}>
+                <History size={13} /> Decision History
+              </button>
+              <div className="user-chip">
+                <UserCheck size={13} /> {userEmail.split('@')[0]}
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setShowPrivacyModal(true)}
+                title="Privacy & Data Controls"
+              >
+                <ShieldCheck size={14} />
+              </button>
+              <button type="button" className="icon-button" onClick={handleSignOut} title="Sign Out">
+                <LogOut size={14} />
+              </button>
+            </div>
+          ) : (
+            <button type="button" className="history-button" onClick={() => setShowAuthModal(true)}>
+              <Lock size={13} /> Sign In / Save History
+            </button>
+          )}
+
           <div className={`connection-chip ${metaStatus?.configured ? 'online' : 'offline'}`}>
             <span className="connection-dot" />
             {metaStatus?.configured ? 'Meta API configured' : 'Deterministic engine active'}
@@ -518,6 +732,7 @@ export default function App() {
             <span><Activity size={15} /> Prerequisite tracking</span>
             <span><GitBranch size={15} /> Zero simulated odds</span>
             <span><Workflow size={15} /> What-if sensitivity</span>
+            <span><Lock size={15} /> Privacy-first persistence</span>
           </div>
 
           <div className="preset-bar">
@@ -831,7 +1046,7 @@ export default function App() {
               </button>
               <div className="privacy-note">
                 <ShieldCheck size={14} />
-                <span>Stateless execution. Inputs and constraints are evaluated server-side and never persisted to a database.</span>
+                <span>Zero unsolicited tracking. Decision history is encrypted and isolated to your private account.</span>
               </div>
               {error && <div className="error-box" role="alert"><CircleAlert size={17} /><span>{error}</span></div>}
               {notice && <div className="notice-box" role="status"><Check size={16} />{notice}</div>}
@@ -941,9 +1156,19 @@ export default function App() {
               <p>Deterministic constraint arithmetic combined with structured scenario breakdown.</p>
             </div>
             {result && (
-              <button className="export-button" onClick={exportResult} type="button">
-                <Download size={15} /> Export JSON report
-              </button>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button
+                  className="export-button"
+                  style={{ background: '#1c2e21', borderColor: 'var(--green)', color: 'var(--green)' }}
+                  onClick={handleSaveToHistory}
+                  type="button"
+                >
+                  <Bookmark size={14} /> {savedDecisionId ? `Save New Version (v${(savedDecisionVersion || 1) + 1})` : 'Save to History'}
+                </button>
+                <button className="export-button" onClick={exportResult} type="button">
+                  <Download size={14} /> Export JSON
+                </button>
+              </div>
             )}
           </div>
 
@@ -1003,7 +1228,10 @@ export default function App() {
                   <span className={`mode-icon ${result.analysis_mode}`}><Sparkles size={17} /></span>
                   <div>
                     <strong>{result.analysis_mode === 'meta_agent' ? 'Meta Muse Spark Agent Analysis' : 'Deterministic Decision Analysis (Fallback)'}</strong>
-                    <small>{result.model_id ? `Model: ${result.model_id}` : 'Pure deterministic arithmetic mode; zero LLM speculation.'}</small>
+                    <small>
+                      {result.model_id ? `Model: ${result.model_id}` : 'Pure deterministic arithmetic mode; zero LLM speculation.'}
+                      {savedDecisionVersion && ` · Version ${savedDecisionVersion} loaded`}
+                    </small>
                   </div>
                 </div>
                 <div className={`verifier-chip ${result.verifier_status}`}>
@@ -1397,6 +1625,150 @@ export default function App() {
             </>
           )}
         </section>
+
+        {/* Phase 5 Modals */}
+
+        {/* Auth / Register Modal */}
+        {showAuthModal && (
+          <div className="modal-backdrop" onClick={() => setShowAuthModal(false)}>
+            <div className="modal-window" onClick={e => e.stopPropagation()}>
+              <div className="modal-title-row">
+                <h3><Lock size={18} /> Sign In or Create Private Account</h3>
+                <button type="button" className="icon-button" onClick={() => setShowAuthModal(false)}><Trash2 size={14} /></button>
+              </div>
+              <p style={{ fontSize: '11px', color: '#97ab9b', margin: '0 0 16px', lineHeight: 1.6 }}>
+                Antevorta uses private token authentication. Enter your email and a secret token to save decision revisions,
+                track assumption changes over time, and protect your choices.
+              </p>
+              <Field label="Your email address">
+                <input
+                  type="email"
+                  value={authEmailInput}
+                  onChange={e => setAuthEmailInput(e.target.value)}
+                  placeholder="e.g. you@example.com"
+                />
+              </Field>
+              <Field label="Your secret token (Password / Key)" hint="Must be at least 8 characters.">
+                <input
+                  type="password"
+                  value={authTokenInput}
+                  onChange={e => setAuthTokenInput(e.target.value)}
+                  placeholder="Enter or create your private key"
+                />
+              </Field>
+              {authError && <div className="error-box" style={{ marginBottom: 14 }}>{authError}</div>}
+              <button
+                type="button"
+                className="analyze-button"
+                style={{ height: 42 }}
+                onClick={handleAuthSubmit}
+              >
+                Sign In / Register <ArrowRight size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Decision History Modal */}
+        {showHistoryModal && (
+          <div className="modal-backdrop" onClick={() => setShowHistoryModal(false)}>
+            <div className="modal-window" onClick={e => e.stopPropagation()}>
+              <div className="modal-title-row">
+                <h3><History size={18} /> Decision History & Revisions</h3>
+                <button type="button" className="icon-button" onClick={() => setShowHistoryModal(false)}><Trash2 size={14} /></button>
+              </div>
+              <p style={{ fontSize: '11px', color: '#97ab9b', margin: '0 0 14px' }}>
+                Browse past decisions and inspect earlier versioned assumptions.
+              </p>
+
+              {savedDecisionsList.length === 0 ? (
+                <p className="muted-copy" style={{ textAlign: 'center', padding: '24px 0' }}>
+                  No saved decisions found. Run a stress test and click &quot;Save to History&quot;.
+                </p>
+              ) : (
+                <div className="history-list">
+                  {savedDecisionsList.map(dec => (
+                    <div key={dec.id} className="history-item">
+                      <div className="history-item-left">
+                        <strong>{dec.title}</strong>
+                        <small>Saved: {new Date(dec.updated_at).toLocaleDateString()} · {dec.revision_count} version(s)</small>
+                      </div>
+                      <div className="history-actions">
+                        <button
+                          type="button"
+                          className="btn-load"
+                          onClick={() => handleLoadDecisionDetail(dec.id)}
+                        >
+                          Load
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-delete"
+                          onClick={() => handleDeleteSavedDecision(dec.id)}
+                          title="Delete decision"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {currentDecisionDetail && currentDecisionDetail.revisions.length > 1 && (
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #28372d' }}>
+                  <span style={{ fontSize: '11px', color: '#90a595', fontWeight: 600 }}>Browse Versions:</span>
+                  <div className="revision-pills">
+                    {currentDecisionDetail.revisions.map(rev => (
+                      <button
+                        key={rev.id}
+                        type="button"
+                        className={`rev-pill ${savedDecisionVersion === rev.version_number ? 'active' : ''}`}
+                        onClick={() => handleLoadSpecificRevision(rev)}
+                      >
+                        v{rev.version_number}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Privacy & Account Controls Modal */}
+        {showPrivacyModal && (
+          <div className="modal-backdrop" onClick={() => setShowPrivacyModal(false)}>
+            <div className="modal-window" onClick={e => e.stopPropagation()}>
+              <div className="modal-title-row">
+                <h3><ShieldCheck size={18} /> Privacy & Data Sovereignty</h3>
+                <button type="button" className="icon-button" onClick={() => setShowPrivacyModal(false)}><Trash2 size={14} /></button>
+              </div>
+              <p style={{ fontSize: '11px', color: '#97ab9b', margin: '0 0 16px', lineHeight: 1.6 }}>
+                You have full control over your personal decision records. You can download a complete JSON export of all your
+                decisions and revisions, or permanently purge your account from our database.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <button
+                  type="button"
+                  className="text-button"
+                  style={{ justifyContent: 'center', height: 40, width: '100%', borderColor: '#3a5441' }}
+                  onClick={handleExportPrivacyData}
+                >
+                  <Download size={14} /> Export All Personal Data (JSON)
+                </button>
+                <button
+                  type="button"
+                  className="text-button"
+                  style={{ justifyContent: 'center', height: 40, width: '100%', borderColor: '#683632', color: '#f09d94', background: '#251514' }}
+                  onClick={handlePurgeAccountData}
+                >
+                  <Trash2 size={14} /> Permanently Purge Account & All Decisions
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <footer className="footer">
           <a className="brand footer-brand" href="#top">

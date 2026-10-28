@@ -40,3 +40,75 @@ export async function recalculateConstraints(
     })
   );
 }
+
+
+export async function registerUserAccount(email: string, token: string): Promise<{ status: string; user: { id: string; email: string } }> {
+  return parseResponse(await fetch(`${API_BASE}/api/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, token }),
+  }));
+}
+
+export async function getCurrentUser(token: string): Promise<{ user: { id: string; email: string; created_at: string } }> {
+  return parseResponse(await fetch(`${API_BASE}/api/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }));
+}
+
+export async function saveDecision(
+  token: string,
+  input_data: DecisionInput,
+  analysis_data: AnalysisResponse,
+): Promise<{ id: string; title: string; latest_version: number }> {
+  return parseResponse(await fetch(`${API_BASE}/api/decisions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ input_data, analysis_data }),
+  }));
+}
+
+export async function addDecisionRevision(
+  token: string,
+  decisionId: string,
+  input_data: DecisionInput,
+  analysis_data: AnalysisResponse,
+): Promise<{ decision_id: string; revision_id: string; version_number: number }> {
+  return parseResponse(await fetch(`${API_BASE}/api/decisions/${decisionId}/revisions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ input_data, analysis_data }),
+  }));
+}
+
+export async function listDecisions(token: string): Promise<{ decisions: import('./types').SavedDecisionSummary[] }> {
+  return parseResponse(await fetch(`${API_BASE}/api/decisions`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }));
+}
+
+export async function getDecision(token: string, decisionId: string): Promise<import('./types').SavedDecisionDetail> {
+  return parseResponse(await fetch(`${API_BASE}/api/decisions/${decisionId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }));
+}
+
+export async function deleteDecision(token: string, decisionId: string): Promise<{ status: string }> {
+  return parseResponse(await fetch(`${API_BASE}/api/decisions/${decisionId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  }));
+}
+
+export async function exportAllUserData(token: string): Promise<Record<string, unknown>> {
+  return parseResponse(await fetch(`${API_BASE}/api/privacy/export`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }));
+}
+
+export async function purgeAccount(token: string): Promise<{ status: string; message: string }> {
+  return parseResponse(await fetch(`${API_BASE}/api/privacy/account`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  }));
+}

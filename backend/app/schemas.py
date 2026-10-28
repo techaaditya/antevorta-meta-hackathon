@@ -134,3 +134,19 @@ class RecalculateRequest(StrictModel):
 class RecalculateResponse(StrictModel):
     updated_constraints: ConstraintReport
     diff: dict[str, Any]
+
+
+
+class RegisterUserRequest(StrictModel):
+    email: str = Field(min_length=3, max_length=120)
+    token: str = Field(min_length=8, max_length=128)
+
+
+class SaveDecisionRequest(StrictModel):
+    input_data: DecisionInput
+    analysis_data: AnalysisResponse
+
+
+class AddRevisionRequest(StrictModel):
+    input_data: DecisionInput
+    analysis_data: AnalysisResponse
