@@ -166,3 +166,122 @@ export type SavedDecisionDetail = {
   updated_at: string;
   revisions: DecisionRevisionItem[];
 };
+
+// -----------------------------------------------------------------------------
+// Phase 9 Types
+// -----------------------------------------------------------------------------
+
+export type PredictionItem = {
+  id: string;
+  user_id: string;
+  decision_id: string | null;
+  statement: string;
+  resolution_criteria: string;
+  resolution_source: string;
+  domain: string;
+  horizon_days: number;
+  due_at: string;
+  p_twin: number;
+  p_generic: number;
+  p_baserate: number | null;
+  qualitative_band: 'unlikely' | 'toss_up' | 'likely' | 'still_learning';
+  resolved: boolean;
+  outcome: boolean | null;
+  resolved_at: string | null;
+  resolution_note: string | null;
+  brier_twin: number | null;
+  brier_generic: number | null;
+  created_at: string;
+};
+
+export type CalibrationReport = {
+  total_predictions: number;
+  resolved_predictions: number;
+  brier_twin: number | null;
+  brier_generic: number | null;
+  brier_skill_score: number | null;
+  accuracy_rate: number | null;
+  qualitative_status: string;
+  interpretation: string;
+  predictions: PredictionItem[];
+};
+
+export type ClaimItem = {
+  id: string;
+  user_id: string;
+  predicate: string;
+  object: string;
+  domain: string;
+  stated_support: number;
+  revealed_support: number;
+  effective_support: number;
+  divergence_score: number;
+  is_divergent: boolean;
+  half_life_days: number;
+  user_disputed: boolean;
+  user_excluded: boolean;
+  created_at: string;
+  last_updated: string;
+};
+
+export type ClaimDivergenceCard = {
+  claim_id: string;
+  title: string;
+  stated_description: string;
+  revealed_description: string;
+  divergence_score: number;
+  recommended_inquiry: string;
+};
+
+export type DAGNode = {
+  id: string;
+  label: string;
+  type: 'decision' | 'option' | 'prereq' | 'resource' | 'bottleneck' | 'experiment' | 'outcome';
+  status: 'FEASIBLE' | 'CONFLICT' | 'PENDING' | 'UNKNOWN' | 'VERIFIED';
+  details: string;
+  x: number;
+  y: number;
+};
+
+export type DAGEdge = {
+  id: string;
+  source: string;
+  target: string;
+  label: string;
+  status: 'active' | 'blocked' | 'warning';
+};
+
+export type DecisionDAG = {
+  nodes: DAGNode[];
+  edges: DAGEdge[];
+  critical_bottlenecks: string[];
+  recommended_path: string;
+};
+
+export type FutureSelfResponse = {
+  option_id: string;
+  option_name: string;
+  horizon_years: number;
+  perspective: string;
+  dialogue_transcript: string;
+  hardest_tradeoff: string;
+  what_i_wish_i_knew: string;
+  recommended_micro_experiment: string;
+  disclaimer: string;
+};
+
+export type VoiceTranscribeResponse = {
+  raw_transcript: string;
+  extracted_question: string;
+  parsed_input: DecisionInput;
+  confidence_note: string;
+};
+
+export type VisualScenarioResponse = {
+  option_id: string;
+  option_name: string;
+  image_url: string;
+  prompt_used: string;
+  visual_narrative: string;
+  provider: string;
+};

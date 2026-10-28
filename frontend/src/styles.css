@@ -160,3 +160,59 @@
 .citation-link:hover{text-decoration:underline}
 .citation-snippet{font-size:11px;color:#c4d7c8;line-height:1.5}
 .citation-meta{font:9px var(--mono);color:#728a78}
+
+/* Phase 9: Grand Vision UI Styles */
+/* Visual Branching Decision DAG */
+.dag-container{position:relative;width:100%;overflow-x:auto;padding:16px 0;background:#0c120e;border:1px solid #233427;border-radius:12px;margin:14px 0}
+.dag-svg{display:block;margin:0 auto}
+.dag-node{cursor:pointer;transition:transform .15s ease}
+.dag-node:hover{filter:brightness(1.2)}
+.dag-edge{stroke-dasharray:4,4;animation:dash 20s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-100}}
+
+/* Future Self Portal */
+.future-self-card{padding:18px;border:1px solid #375440;border-radius:12px;background:linear-gradient(135deg,#101c14,#0d1611);display:flex;flex-direction:column;gap:12px;margin:14px 0}
+.future-self-header{display:flex;justify-content:space-between;align-items:center}
+.future-self-dialogue{padding:14px 16px;border-left:3px solid var(--green);background:#132218;border-radius:0 8px 8px 0;font-size:12px;line-height:1.7;color:#d5eadb;font-style:italic}
+.future-self-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.future-self-box{padding:10px 12px;border:1px solid #26382b;border-radius:8px;background:#0d140f}
+.future-self-box strong{font-size:10px;text-transform:uppercase;color:#85b894;display:block;margin-bottom:3px}
+.future-self-box p{margin:0;font-size:11px;color:#cde0d2}
+
+/* Multimodal Voice & Visual Scenario */
+.voice-mic-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid #385942;border-radius:8px;background:#15241b;color:#a4dea8;font:600 11px var(--mono);cursor:pointer;transition:all .15s ease}
+.voice-mic-btn:hover{background:#1d3726;border-color:var(--green)}
+.voice-mic-active{background:#3b1c18;border-color:#e06c75;color:#f8a4a4;animation:pulse 1.5s infinite}
+@keyframes pulse{0%{opacity:1}50%{opacity:.6}100%{opacity:1}}
+
+.visual-scene-panel{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.visual-scene-img{width:100%;max-height:260px;object-fit:cover;border-radius:8px;border:1px solid #283a2d}
+.visualize-btn{display:flex;align-items:center;gap:6px;padding:6px 11px;border:1px solid #37533f;border-radius:6px;background:#16251c;color:#a0d6ab;font:600 10px var(--mono);cursor:pointer}
+.visualize-btn:hover{background:#1e3526;border-color:var(--green)}
+
+/* Calibration Mirror (L4A) */
+.calibration-drawer{display:flex;flex-direction:column;gap:14px}
+.bss-badge-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.bss-card{padding:12px;border:1px solid #2f4535;border-radius:8px;background:#101912;text-align:center}
+.bss-card span{font:9px var(--mono);color:#7f9a86;text-transform:uppercase;display:block}
+.bss-card strong{font:700 18px var(--mono);color:var(--green);margin-top:2px;display:block}
+
+.prediction-item{padding:12px 14px;border:1px solid #283c2e;border-radius:8px;background:#0e1610;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.pred-text strong{font-size:12px;color:#d2e5d6;display:block}
+.pred-text small{font-size:10px;color:#7e9a86}
+.pred-probs{display:flex;align-items:center;gap:8px}
+.prob-chip{font:10px var(--mono);padding:3px 7px;border-radius:4px;border:1px solid #324e39;background:#142318;color:#9ce0a9}
+.btn-resolve-win{padding:4px 8px;border:1px solid #386343;border-radius:5px;background:#173621;color:#8fe29e;font:600 10px var(--mono);cursor:pointer}
+.btn-resolve-fail{padding:4px 8px;border:1px solid #613632;border-radius:5px;background:#2d1715;color:#f09d94;font:600 10px var(--mono);cursor:pointer}
+
+/* Claims & Divergence */
+.claim-row{padding:10px 12px;border:1px solid #26382b;border-radius:8px;background:#0e1510;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.claim-predicate{font:9px var(--mono);padding:2px 6px;border-radius:4px;background:#182b1d;color:#85c790;border:1px solid #2e5237}
+.divergence-alert-card{padding:12px 14px;border:1px solid #6b4122;border-radius:8px;background:#281b11;margin-bottom:10px}
+.divergence-alert-card strong{font-size:11px;color:#f2cb63;display:block;margin-bottom:4px}
+.divergence-alert-card p{margin:0 0 6px;font-size:10px;color:#e8d19b;line-height:1.5}
+.divergence-inquiry{font-size:10px;color:#d5c290;font-style:italic}
+
+/* Shareable Decision Brief */
+.share-brief-btn{display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid #36553f;border-radius:8px;background:#16271c;color:#a4dea8;font:600 11px var(--mono);cursor:pointer}
+.share-brief-btn:hover{background:#1e3827;border-color:var(--green)}

@@ -71,6 +71,24 @@ flowchart TD
    - Strict IDOR prevention isolating decision records per account.
    - Full GDPR-compliant privacy data export (`GET /api/privacy/export`) and permanent account purge (`DELETE /api/privacy/account`).
 
+8. **Calibration Mirror & Brier Skill Score (`L4A`):**
+   - Implements a machine-checkable 7–28 day prediction ledger with objective verification criteria.
+   - Computes genuine calibration using the **Brier Skill Score**: $BSS = 1 - \frac{BS_{twin}}{BS_{generic}}$, testing whether the personalized twin beats the 50% baseline. Directly targets the hackathon's "Verifiable Agents" theme.
+
+9. **Person Model Claim Store & Revealed Divergence (`L3`):**
+   - Persistent personal baseline claims with exponential time decay ($w(t) = 0.5^{\Delta t / 30d}$).
+   - Automated detection of Stated vs. Revealed Divergence ($\Delta_{SR} \ge 0.35$), surfacing behavioral blindspots and friction alerts before committing.
+
+10. **Topological Decision DAG Explorer:**
+    - Interactive Directed Acyclic Graph rendering root decisions, candidate paths, prerequisites, constraints, outcomes, and reversible experiment gates.
+    - Automated bottleneck detection highlighting critical resource dependencies across options.
+
+11. **Future Self Dialogue & Multimodal Meta Suite:**
+    - Future Self dialogue (3-to-5 year horizon) synthesized with Meta Model API (Muse Wonder / Spark).
+    - Spoken dilemma intake powered by Meta Muse Voice Transcribe.
+    - Day-in-the-life visual scene generation powered by Meta Muse Image.
+    - One-click Decision Memo brief formatted for instant sharing.
+
 ---
 
 ## 🛠️ Quick Start & Setup
@@ -131,7 +149,7 @@ Open your browser to the local Vite development URL (typically [`http://localhos
 
 ## 🧪 Test Suite & Build Verification
 
-The repository contains an exhaustive automated test suite with **63 passing backend unit & integration tests** and full TypeScript type checking:
+The repository contains an exhaustive automated test suite with **73 passing backend unit & integration tests** and full TypeScript type checking:
 
 ```bash
 # Run all backend tests

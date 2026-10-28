@@ -5,17 +5,22 @@ import {
   Clock3, Compass, Download, FileText, FlaskConical, GitBranch, History, Info, KeyRound,
   Layers, LoaderCircle, Lock, LogOut, Plus, RefreshCw, ShieldCheck, Sparkles, Square,
   Table, Target, Trash2, UserCheck, Wallet, WandSparkles, Workflow, Zap,
-  HelpCircle, ExternalLink, CheckCircle2,
+  HelpCircle, ExternalLink, CheckCircle2, Mic, Image as ImageIcon, MessageSquare, Share2, Eye, Award,
 } from 'lucide-react';
 import {
   analyzeDecision, getMetaStatus, recalculateConstraints, getClarificationReport,
   registerUserAccount, getCurrentUser, saveDecision, addDecisionRevision,
   listDecisions, getDecision, deleteDecision, exportAllUserData, purgeAccount,
+  getDecisionDAG, getFutureSelfReflection, transcribeVoiceDecision, visualizeOptionScenario,
+  listClaims, disputeClaim, excludeClaim, getClaimsDivergence,
+  listPredictions, createPrediction, resolvePrediction, getCalibrationReport,
 } from './api';
 import type {
   AnalysisResponse, DecisionInput, OptionAssessment, OptionInput, RecalculateDiff,
   SavedDecisionSummary, SavedDecisionDetail, ClarificationReport, ClarificationPrompt,
-  VerifiedCitation, VerificationReport,
+  VerifiedCitation, VerificationReport, DecisionDAG, FutureSelfResponse,
+  VoiceTranscribeResponse, VisualScenarioResponse, ClaimItem, ClaimDivergenceCard,
+  PredictionItem, CalibrationReport as CalibrationReportType,
 } from './types';
 
 const initialDraft: DecisionInput = {
@@ -288,13 +293,39 @@ export default function App() {
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [metaStatus, setMetaStatus] = useState<{ configured: boolean; model_id: string | null; message: string } | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'comparison' | 'facts' | 'scenarios' | 'trace' | 'clarifications' | 'audit'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'comparison' | 'facts' | 'scenarios' | 'trace' | 'clarifications' | 'audit' | 'dag'>('overview');
   const [notice, setNotice] = useState('');
   const [activePreset, setActivePreset] = useState<string>('academic');
 
   // Adaptive Clarification State
   const [clarityLoading, setClarityLoading] = useState(false);
   const [intakeClarityReport, setIntakeClarityReport] = useState<ClarificationReport | null>(null);
+
+  // Phase 9: Grand Vision State
+  const [dagData, setDagData] = useState<DecisionDAG | null>(null);
+  const [dagLoading, setDagLoading] = useState(false);
+
+  const [showFutureSelfModal, setShowFutureSelfModal] = useState(false);
+  const [futureSelfOptionId, setFutureSelfOptionId] = useState<string>('');
+  const [futureSelfResponse, setFutureSelfResponse] = useState<FutureSelfResponse | null>(null);
+  const [futureSelfLoading, setFutureSelfLoading] = useState(false);
+
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [voiceText, setVoiceText] = useState('');
+  const [voiceTranscribeLoading, setVoiceTranscribeLoading] = useState(false);
+
+  const [visualScenes, setVisualScenes] = useState<Record<string, VisualScenarioResponse>>({});
+  const [visualLoading, setVisualLoading] = useState<Record<string, boolean>>({});
+
+  const [showCalibrationDrawer, setShowCalibrationDrawer] = useState(false);
+  const [calibrationReport, setCalibrationReport] = useState<CalibrationReportType | null>(null);
+  const [newMilestoneText, setNewMilestoneText] = useState('');
+  const [newMilestoneCriteria, setNewMilestoneCriteria] = useState('');
+  const [newMilestoneDomain, setNewMilestoneDomain] = useState<'study_prep' | 'coding_milestone' | 'follow_through' | 'schedule_boundary' | 'financial_buffer'>('follow_through');
+
+  const [userClaims, setUserClaims] = useState<ClaimItem[]>([]);
+  const [claimDivergences, setClaimDivergences] = useState<ClaimDivergenceCard[]>([]);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Persistence, History & User State
   const [userToken, setUserToken] = useState<string>(() => localStorage.getItem('antevorta_user_token') || '');
@@ -323,15 +354,124 @@ export default function App() {
   useEffect(() => {
     getMetaStatus().then(setMetaStatus).catch(() => setMetaStatus(null));
     if (userToken) {
-      getCurrentUser(userToken).catch(() => {
-        // Token expired/invalid
-        localStorage.removeItem('antevorta_user_token');
-        localStorage.removeItem('antevorta_user_email');
-        setUserToken('');
-        setUserEmail('');
-      });
+      getCurrentUser(userToken)
+        .then(() => {
+          loadCalibrationAndClaims(userToken);
+        })
+        .catch(() => {
+          // Token expired/invalid
+          localStorage.removeItem('antevorta_user_token');
+          localStorage.removeItem('antevorta_user_email');
+          setUserToken('');
+          setUserEmail('');
+        });
     }
   }, [userToken]);
+
+  const loadCalibrationAndClaims = async (token: string) => {
+    try {
+      const [cal, claims, divs] = await Promise.all([
+        getCalibrationReport(token).catch(() => null),
+        listClaims(token).catch(() => []),
+        getClaimsDivergence(token).catch(() => []),
+      ]);
+      if (cal) setCalibrationReport(cal);
+      setUserClaims(claims);
+      setClaimDivergences(divs);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleFetchDAG = async () => {
+    setDagLoading(true);
+    try {
+      const dag = await getDecisionDAG(draft);
+      setDagData(dag);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setDagLoading(false);
+    }
+  };
+
+  const handleConsultFutureSelf = async (optId: string) => {
+    setFutureSelfOptionId(optId);
+    setShowFutureSelfModal(true);
+    setFutureSelfLoading(true);
+    setFutureSelfResponse(null);
+    try {
+      const resp = await getFutureSelfReflection(optId, draft, 3);
+      setFutureSelfResponse(resp);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Future self consultation failed');
+    } finally {
+      setFutureSelfLoading(false);
+    }
+  };
+
+  const handleVoiceParse = async () => {
+    if (!voiceText.trim()) return;
+    setVoiceTranscribeLoading(true);
+    try {
+      const res = await transcribeVoiceDecision(voiceText);
+      setDraft(res.parsed_input);
+      setShowVoiceModal(false);
+      setNotice(`Spoken dictation parsed into decision form: "${res.extracted_question}"`);
+      window.setTimeout(() => setNotice(''), 4000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Voice transcription parsing failed');
+    } finally {
+      setVoiceTranscribeLoading(false);
+    }
+  };
+
+  const handleVisualizeOption = async (opt: OptionInput) => {
+    setVisualLoading(prev => ({ ...prev, [opt.id]: true }));
+    try {
+      const res = await visualizeOptionScenario(opt.id, opt.name, opt.description || opt.name, draft.horizon_months);
+      setVisualScenes(prev => ({ ...prev, [opt.id]: res }));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setVisualLoading(prev => ({ ...prev, [opt.id]: false }));
+    }
+  };
+
+  const handleCreateMilestone = async () => {
+    if (!userToken || !newMilestoneText.trim() || !newMilestoneCriteria.trim()) return;
+    try {
+      const due = new Date();
+      due.setDate(due.getDate() + 14);
+      await createPrediction(userToken, {
+        statement: newMilestoneText,
+        resolution_criteria: newMilestoneCriteria,
+        domain: newMilestoneDomain,
+        horizon_days: 14,
+        due_at: due.toISOString(),
+        decision_id: savedDecisionId || undefined,
+      });
+      setNewMilestoneText('');
+      setNewMilestoneCriteria('');
+      await loadCalibrationAndClaims(userToken);
+      setNotice('Machine-checkable micro-commitment logged to Calibration Mirror.');
+      window.setTimeout(() => setNotice(''), 3000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to create commitment');
+    }
+  };
+
+  const handleResolveMilestone = async (predId: string, outcome: boolean) => {
+    if (!userToken) return;
+    try {
+      await resolvePrediction(userToken, predId, outcome, outcome ? 'Verified complete' : 'Missed target deadline');
+      await loadCalibrationAndClaims(userToken);
+      setNotice(`Milestone resolved as ${outcome ? 'Completed' : 'Missed'}. Brier Skill Score updated.`);
+      window.setTimeout(() => setNotice(''), 3500);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to resolve milestone');
+    }
+  };
 
   const updateOption = useCallback((id: string, field: keyof OptionInput, value: unknown) => {
     setDraft(current => ({
@@ -742,6 +882,41 @@ export default function App() {
           <span className="brand-word">antevorta<span className="brand-period">.</span></span>
         </a>
         <div className="topbar-right">
+          <button
+            type="button"
+            className="voice-mic-btn"
+            onClick={() => setShowVoiceModal(true)}
+            title="Dictate dilemma with Meta Muse Voice Transcribe"
+          >
+            <Mic size={13} /> Voice Intake
+          </button>
+          <button
+            type="button"
+            className="history-button"
+            onClick={() => {
+              setShowCalibrationDrawer(true);
+              if (userToken) loadCalibrationAndClaims(userToken);
+            }}
+            title="L4A Brier Score & Behavioral Milestones"
+          >
+            <Target size={13} /> Calibration Mirror
+            {calibrationReport?.brier_skill_score !== null && calibrationReport?.brier_skill_score !== undefined && (
+              <span style={{ color: 'var(--green)', marginLeft: 4, fontWeight: 700 }}>
+                {((calibrationReport.brier_skill_score) * 100).toFixed(0)}% BSS
+              </span>
+            )}
+          </button>
+          {result && (
+            <button
+              type="button"
+              className="share-brief-btn"
+              onClick={() => setShowShareModal(true)}
+              title="Export shareable Decision Brief for X / Social"
+            >
+              <Share2 size={13} /> Decision Memo
+            </button>
+          )}
+
           {userToken ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <button type="button" className="history-button" onClick={handleOpenHistoryModal}>
@@ -1427,6 +1602,17 @@ export default function App() {
                 >
                   <CheckCircle2 size={13} /> Verification Audit & Citations <span>{(result.grounded_citations?.length || 0) + (result.verification_report ? 1 : 0)}</span>
                 </button>
+                <button
+                  role="tab"
+                  aria-selected={activeTab === 'dag'}
+                  className={activeTab === 'dag' ? 'active' : ''}
+                  onClick={() => {
+                    setActiveTab('dag');
+                    if (!dagData) handleFetchDAG();
+                  }}
+                >
+                  <Workflow size={13} /> Decision DAG Tree
+                </button>
               </div>
 
               {activeTab === 'overview' && (
@@ -1440,6 +1626,13 @@ export default function App() {
                       weeklyCapacity={result.constraints.weekly_capacity_hours}
                       totalBudget={result.constraints.option_assessments[0]?.projected_available_budget_npr}
                       horizon={result.constraints.time_horizon_months}
+                      onConsultFutureSelf={() => handleConsultFutureSelf(assessment.option_id)}
+                      onVisualizeOption={() => {
+                        const opt = draft.options.find(o => o.id === assessment.option_id);
+                        if (opt) handleVisualizeOption(opt);
+                      }}
+                      visualScene={visualScenes[assessment.option_id]}
+                      visualLoading={visualLoading[assessment.option_id]}
                     />
                   ))}
                   <div className="report-panel full-width">
@@ -1676,6 +1869,90 @@ export default function App() {
                       </ul>
                     </div>
                   </div>
+
+                  {/* Person Model (L3) & Revealed Divergence */}
+                  <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #233829' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <UserCheck size={16} />
+                        <h4 style={{ margin: 0, fontSize: 14 }}>Person Model (L3 Claims & Exponential Time Decay)</h4>
+                      </div>
+                      <span style={{ fontSize: 10, color: '#889f8f', fontStyle: 'italic' }}>
+                        Half-life decay: w(t) = 0.5^(Δt / 30d)
+                      </span>
+                    </div>
+                    <p style={{ fontSize: 11, color: '#97aba0', margin: '0 0 16px' }}>
+                      Longitudinal stated preferences and observed behavioral claims. Claims decay exponentially over time unless reaffirmed, and divergence triggers reflective calibration alerts.
+                    </p>
+
+                    {claimDivergences.length > 0 && (
+                      <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {claimDivergences.map((div, i) => (
+                          <div key={i} style={{ padding: 12, background: '#2a1b18', border: '1px solid #703d36', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span className="prov-badge prov-unknown">DIVERGENCE</span>
+                                <strong style={{ fontSize: 12, color: '#fca5a5' }}>{div.title}</strong>
+                              </div>
+                              <div style={{ fontSize: 11, color: '#e2d4cf', marginTop: 4 }}>
+                                Stated: {div.stated_description} vs Revealed: {div.revealed_description} (Δ: {(div.divergence_score * 100).toFixed(0)}%)
+                              </div>
+                              <div style={{ fontSize: 10, color: '#bfa7a1', marginTop: 2 }}>{div.recommended_inquiry}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {userClaims.length === 0 ? (
+                      <div style={{ padding: 16, background: '#101a14', borderRadius: 8, fontSize: 11, color: '#889f8f', textAlign: 'center' }}>
+                        No persistent claims saved yet. Sign in to track longitudinal calibration and personality decay.
+                      </div>
+                    ) : (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+                        {userClaims.map(claim => (
+                          <div key={claim.id} style={{ padding: 12, background: '#121e16', border: '1px solid #233a2a', borderRadius: 8 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                              <span style={{ fontSize: 10, color: '#8dd99c', textTransform: 'uppercase', fontWeight: 600 }}>{claim.domain}</span>
+                              <span style={{ fontSize: 10, color: '#889f8f' }}>Weight: {(claim.effective_support * 100).toFixed(0)}%</span>
+                            </div>
+                            <p style={{ fontSize: 11, color: '#e5ece7', margin: '0 0 8px' }}>{claim.predicate}: {claim.object}</p>
+                            <div style={{ background: '#1c2e22', height: 4, borderRadius: 2, overflow: 'hidden', marginBottom: 8 }}>
+                              <div style={{ width: `${claim.effective_support * 100}%`, height: '100%', background: '#34d399' }} />
+                            </div>
+                            <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                              <button
+                                type="button"
+                                className="text-button"
+                                style={{ padding: '2px 8px', fontSize: 10 }}
+                                onClick={async () => {
+                                  if (userToken) {
+                                    await disputeClaim(userToken, claim.id);
+                                    loadCalibrationAndClaims(userToken);
+                                  }
+                                }}
+                              >
+                                Dispute
+                              </button>
+                              <button
+                                type="button"
+                                className="text-button"
+                                style={{ padding: '2px 8px', fontSize: 10, color: '#f87171' }}
+                                onClick={async () => {
+                                  if (userToken) {
+                                    await excludeClaim(userToken, claim.id);
+                                    loadCalibrationAndClaims(userToken);
+                                  }
+                                }}
+                              >
+                                Exclude
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -1862,6 +2139,169 @@ export default function App() {
                 </div>
               )}
 
+              {activeTab === 'dag' && (
+                <div className="report-panel full-width">
+                  <div className="panel-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Workflow size={16} />
+                      <h3>Directed Acyclic Graph (DAG) Decision Tree</h3>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-opt-action"
+                      onClick={handleFetchDAG}
+                      disabled={dagLoading}
+                    >
+                      {dagLoading ? <LoaderCircle size={12} className="spin" /> : <RefreshCw size={12} />} Refresh DAG
+                    </button>
+                  </div>
+                  <p style={{ margin: '0 0 14px', fontSize: '11px', color: '#97aba0' }}>
+                    Topological breakdown of your decision problem: root decision &rarr; candidate options &rarr; prerequisites &rarr; constraints &rarr; simulated outcomes &rarr; reversible experiment gate.
+                  </p>
+
+                  {dagData?.critical_bottlenecks && dagData.critical_bottlenecks.length > 0 && (
+                    <div className="dag-bottleneck-alert" style={{ marginBottom: 16, padding: '12px 16px', background: '#2d1b1a', border: '1px solid #733c38', borderRadius: 8 }}>
+                      <strong style={{ color: '#fca5a5', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+                        <CircleAlert size={14} /> Critical Bottlenecks Identified:
+                      </strong>
+                      <ul style={{ margin: '6px 0 0 18px', padding: 0, fontSize: 11, color: '#f3c4c1' }}>
+                        {dagData.critical_bottlenecks.map((b, i) => <li key={i}>{b}</li>)}
+                      </ul>
+                    </div>
+                  )}
+
+                  {dagLoading && !dagData ? (
+                    <div style={{ padding: 40, textAlign: 'center', color: '#8dd99c' }}>
+                      <LoaderCircle size={24} className="spin" style={{ marginBottom: 8 }} />
+                      <div>Computing topological DAG coordinates...</div>
+                    </div>
+                  ) : dagData ? (
+                    <div className="dag-container" style={{ background: '#0a100c', borderRadius: 10, border: '1px solid #203628', padding: 16, overflowX: 'auto' }}>
+                      <svg viewBox="0 0 1000 650" style={{ width: '100%', minWidth: 800, height: 480, display: 'block' }}>
+                        <defs>
+                          <marker id="arrow-green" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399" />
+                          </marker>
+                          <marker id="arrow-red" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#f87171" />
+                          </marker>
+                          <marker id="arrow-yellow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24" />
+                          </marker>
+                          <marker id="arrow-neutral" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#4b6b55" />
+                          </marker>
+                        </defs>
+
+                        {/* Render Edges */}
+                        {dagData.edges.map((edge, i) => {
+                          const src = dagData.nodes.find(n => n.id === edge.source);
+                          const tgt = dagData.nodes.find(n => n.id === edge.target);
+                          if (!src || !tgt) return null;
+                          const color = edge.status === 'active' ? '#34d399' : edge.status === 'blocked' ? '#f87171' : edge.status === 'warning' ? '#fbbf24' : '#4b6b55';
+                          const markerId = edge.status === 'active' ? 'url(#arrow-green)' : edge.status === 'blocked' ? 'url(#arrow-red)' : edge.status === 'warning' ? 'url(#arrow-yellow)' : 'url(#arrow-neutral)';
+                          return (
+                            <g key={i}>
+                              <line
+                                x1={src.x}
+                                y1={src.y}
+                                x2={tgt.x}
+                                y2={tgt.y}
+                                stroke={color}
+                                strokeWidth="2"
+                                strokeDasharray={edge.status === 'warning' ? '4 3' : undefined}
+                                markerEnd={markerId}
+                                opacity="0.8"
+                              />
+                              {edge.label && (
+                                <text
+                                  x={(src.x + tgt.x) / 2}
+                                  y={(src.y + tgt.y) / 2 - 6}
+                                  fill="#9ab8a3"
+                                  fontSize="9"
+                                  textAnchor="middle"
+                                >
+                                  {edge.label}
+                                </text>
+                              )}
+                            </g>
+                          );
+                        })}
+
+                        {/* Render Nodes */}
+                        {dagData.nodes.map(node => {
+                          const isRoot = node.type === 'decision';
+                          const isOpt = node.type === 'option';
+                          const strokeColor = node.status === 'FEASIBLE' ? '#34d399' : node.status === 'CONFLICT' ? '#f87171' : node.status === 'PENDING' ? '#fbbf24' : node.status === 'VERIFIED' ? '#60a5fa' : '#4b6b55';
+                          const fillColor = node.status === 'CONFLICT' ? '#261514' : node.status === 'FEASIBLE' ? '#112217' : '#141d18';
+                          const width = isRoot ? 160 : isOpt ? 140 : 130;
+                          const height = isRoot ? 54 : isOpt ? 48 : 42;
+                          return (
+                            <g key={node.id} transform={`translate(${node.x - width / 2}, ${node.y - height / 2})`}>
+                              <rect
+                                width={width}
+                                height={height}
+                                rx="6"
+                                ry="6"
+                                fill={fillColor}
+                                stroke={strokeColor}
+                                strokeWidth={isRoot || isOpt ? '2' : '1.5'}
+                              />
+                              <text
+                                x={width / 2}
+                                y="16"
+                                fill="#7da087"
+                                fontSize="8"
+                                fontWeight="bold"
+                                textAnchor="middle"
+                                letterSpacing="0.05em"
+                              >
+                                {node.type.toUpperCase()}
+                              </text>
+                              <text
+                                x={width / 2}
+                                y="32"
+                                fill="#f1f7f2"
+                                fontSize="10"
+                                fontWeight="600"
+                                textAnchor="middle"
+                              >
+                                {node.label.length > 20 ? `${node.label.slice(0, 18)}...` : node.label}
+                              </text>
+                              {node.status !== 'UNKNOWN' && (
+                                <circle
+                                  cx={width - 10}
+                                  cy="10"
+                                  r="4"
+                                  fill={strokeColor}
+                                />
+                              )}
+                            </g>
+                          );
+                        })}
+                      </svg>
+
+                      {/* Legend */}
+                      <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 12, fontSize: 11, color: '#889f8f' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#34d399' }} /> Feasible Path
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#f87171' }} /> Constraint Deficit
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#fbbf24' }} /> Pending Prerequisite
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ padding: 30, textAlign: 'center', color: '#90a595' }}>
+                      Click &quot;Refresh DAG&quot; to build the dependency tree.
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="report-disclaimer">
                 <ShieldCheck size={15} />
                 <span>{result.narrative.caveat} Antevorta supports your reasoning; it does not make the decision for you.</span>
@@ -2014,6 +2454,291 @@ export default function App() {
           </div>
         )}
 
+        {/* Phase 9 Modals */}
+
+        {/* Future Self Dialogue Modal */}
+        {showFutureSelfModal && (
+          <div className="modal-backdrop" onClick={() => setShowFutureSelfModal(false)}>
+            <div className="modal-window" style={{ maxWidth: 640 }} onClick={e => e.stopPropagation()}>
+              <div className="modal-title-row">
+                <h3><Sparkles size={18} color="#a78bfa" /> Future Self Reflection ({futureSelfResponse?.perspective || '3 Years Out'})</h3>
+                <button type="button" className="icon-button" onClick={() => setShowFutureSelfModal(false)}><Trash2 size={14} /></button>
+              </div>
+              {futureSelfLoading ? (
+                <div style={{ padding: 40, textAlign: 'center', color: '#a78bfa' }}>
+                  <LoaderCircle size={28} className="spin" style={{ marginBottom: 12 }} />
+                  <div>Synthesizing future perspective with Meta Model API...</div>
+                </div>
+              ) : futureSelfResponse ? (
+                <div>
+                  <div style={{ padding: '12px 16px', background: '#1a142e', border: '1px solid #43336d', borderRadius: 8, marginBottom: 16 }}>
+                    <span style={{ fontSize: 10, color: '#c4b5fd', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>THE DIALOGUE</span>
+                    <div style={{ whiteSpace: 'pre-wrap', fontSize: 12, color: '#f3e8ff', marginTop: 8, lineHeight: 1.6 }}>
+                      {futureSelfResponse.dialogue_transcript}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                    <div style={{ padding: 12, background: '#121815', border: '1px solid #28372d', borderRadius: 8 }}>
+                      <strong style={{ fontSize: 11, color: '#fca5a5' }}>Hardest Trade-off Faced:</strong>
+                      <p style={{ fontSize: 11, color: '#d1ded4', margin: '4px 0 0', lineHeight: 1.5 }}>
+                        {futureSelfResponse.hardest_tradeoff}
+                      </p>
+                    </div>
+                    <div style={{ padding: 12, background: '#121815', border: '1px solid #28372d', borderRadius: 8 }}>
+                      <strong style={{ fontSize: 11, color: '#93c5fd' }}>What I Wish I Had Known:</strong>
+                      <p style={{ fontSize: 11, color: '#d1ded4', margin: '4px 0 0', lineHeight: 1.5 }}>
+                        {futureSelfResponse.what_i_wish_i_knew}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: 12, background: '#132319', border: '1px solid #2f563b', borderRadius: 8, marginBottom: 16 }}>
+                    <strong style={{ fontSize: 11, color: '#86efac' }}>Recommended Concrete Micro-Experiment:</strong>
+                    <p style={{ fontSize: 11, color: '#e5ece7', margin: '4px 0 0', lineHeight: 1.5 }}>
+                      {futureSelfResponse.recommended_micro_experiment}
+                    </p>
+                  </div>
+
+                  <div style={{ fontSize: 10, color: '#889f8f', textAlign: 'center' }}>
+                    {futureSelfResponse.disclaimer}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        )}
+
+        {/* Voice Intake Modal */}
+        {showVoiceModal && (
+          <div className="modal-backdrop" onClick={() => setShowVoiceModal(false)}>
+            <div className="modal-window" style={{ maxWidth: 580 }} onClick={e => e.stopPropagation()}>
+              <div className="modal-title-row">
+                <h3><Mic size={18} color="#34d399" /> Meta Muse Voice Intake & Dilemma Parser</h3>
+                <button type="button" className="icon-button" onClick={() => setShowVoiceModal(false)}><Trash2 size={14} /></button>
+              </div>
+              <p style={{ fontSize: 11, color: '#97aba0', margin: '0 0 14px', lineHeight: 1.5 }}>
+                Speak or paste your natural language decision dilemma. Meta AI extracts your core question, candidate options, hours, and budgets directly into the mathematical model.
+              </p>
+              <Field label="Voice Dictation / Spoken Transcript">
+                <textarea
+                  rows={5}
+                  value={voiceText}
+                  onChange={e => setVoiceText(e.target.value)}
+                  placeholder="e.g. 'I'm torn between joining a high-growth AI startup that requires 50 hours a week with 20k costs, or staying in my current steady consulting role at 35 hours. I have 300,000 savings and 15,000 monthly surplus...'"
+                />
+              </Field>
+              <div style={{ display: 'flex', gap: 8, margin: '8px 0 16px' }}>
+                <button
+                  type="button"
+                  className="text-button"
+                  style={{ fontSize: 10, padding: '4px 8px' }}
+                  onClick={() => setVoiceText("I'm deciding whether to accept a seed-stage startup founding engineer role at 55 hours per week with NPR 100,000 upfront equipment costs, or continue my stable remote enterprise job at 38 hours per week with zero upfront cost. My savings are NPR 450,000 and monthly surplus is NPR 25,000.")}
+                >
+                  Paste Sample Startup vs Enterprise Dilemma
+                </button>
+              </div>
+              <button
+                type="button"
+                className="analyze-button"
+                style={{ height: 42 }}
+                onClick={handleVoiceParse}
+                disabled={voiceTranscribeLoading || !voiceText.trim()}
+              >
+                {voiceTranscribeLoading ? <LoaderCircle size={15} className="spin" /> : <Sparkles size={15} />} Parse into Decision Model
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Calibration Mirror Drawer */}
+        {showCalibrationDrawer && (
+          <div className="modal-backdrop" onClick={() => setShowCalibrationDrawer(false)}>
+            <div className="modal-window" style={{ maxWidth: 680, maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+              <div className="modal-title-row">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Award size={18} color="#fbbf24" />
+                  <h3>Calibration Mirror (L4A & Brier Skill Score)</h3>
+                </div>
+                <button type="button" className="icon-button" onClick={() => setShowCalibrationDrawer(false)}><Trash2 size={14} /></button>
+              </div>
+              <p style={{ fontSize: 11, color: '#97aba0', margin: '0 0 16px', lineHeight: 1.5 }}>
+                Scientific verification: Antevorta measures genuine calibration using the <strong>Brier Skill Score (BSS)</strong>: <code>BSS = 1 - (BS_twin / BS_generic)</code>. Test whether your predictions beat the 50% baseline.
+              </p>
+
+              {calibrationReport && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
+                  <div style={{ padding: 12, background: '#141e17', border: '1px solid #233b2a', borderRadius: 8, textAlign: 'center' }}>
+                    <span style={{ fontSize: 10, color: '#8dd99c' }}>BRIER SCORE (TWIN)</span>
+                    <div style={{ fontSize: 18, fontWeight: 'bold', color: '#f1f7f2', marginTop: 4 }}>
+                      {calibrationReport.brier_twin !== null ? calibrationReport.brier_twin.toFixed(3) : 'Pending'}
+                    </div>
+                    <small style={{ fontSize: 9, color: '#889f8f' }}>Lower is better (0.00 = perfect)</small>
+                  </div>
+                  <div style={{ padding: 12, background: '#141e17', border: '1px solid #233b2a', borderRadius: 8, textAlign: 'center' }}>
+                    <span style={{ fontSize: 10, color: '#8dd99c' }}>BRIER SKILL SCORE</span>
+                    <div style={{ fontSize: 18, fontWeight: 'bold', color: (calibrationReport.brier_skill_score || 0) >= 0 ? '#34d399' : '#f87171', marginTop: 4 }}>
+                      {calibrationReport.brier_skill_score !== null ? `${(calibrationReport.brier_skill_score * 100).toFixed(1)}%` : 'Calibrating'}
+                    </div>
+                    <small style={{ fontSize: 9, color: '#889f8f' }}>Vs uncalibrated 50% generic</small>
+                  </div>
+                  <div style={{ padding: 12, background: '#141e17', border: '1px solid #233b2a', borderRadius: 8, textAlign: 'center' }}>
+                    <span style={{ fontSize: 10, color: '#8dd99c' }}>RESOLVED / TOTAL</span>
+                    <div style={{ fontSize: 18, fontWeight: 'bold', color: '#f1f7f2', marginTop: 4 }}>
+                      {calibrationReport.resolved_predictions} / {calibrationReport.total_predictions}
+                    </div>
+                    <small style={{ fontSize: 9, color: '#889f8f' }}>
+                      {calibrationReport.accuracy_rate !== null ? `${(calibrationReport.accuracy_rate * 100).toFixed(0)}% accuracy` : 'Awaiting resolutions'}
+                    </small>
+                  </div>
+                </div>
+              )}
+
+              {/* Log New Prediction Form */}
+              <div style={{ padding: 14, background: '#0e1711', border: '1px solid #213627', borderRadius: 8, marginBottom: 16 }}>
+                <strong style={{ fontSize: 12, color: '#8dd99c', display: 'block', marginBottom: 8 }}>
+                  Log 14-Day Machine-Checkable Commitment
+                </strong>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <input
+                    type="text"
+                    value={newMilestoneText}
+                    onChange={e => setNewMilestoneText(e.target.value)}
+                    placeholder="Statement (e.g., 'Will spend less than 15 hours on thesis this week')"
+                    style={{ background: '#070c09', border: '1px solid #243d2c', borderRadius: 6, padding: '8px 12px', color: '#fff', fontSize: 12 }}
+                  />
+                  <input
+                    type="text"
+                    value={newMilestoneCriteria}
+                    onChange={e => setNewMilestoneCriteria(e.target.value)}
+                    placeholder="Verification criterion (e.g., 'Toggl time-tracking log shows < 15.0h')"
+                    style={{ background: '#070c09', border: '1px solid #243d2c', borderRadius: 6, padding: '8px 12px', color: '#fff', fontSize: 12 }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <select
+                      value={newMilestoneDomain}
+                      onChange={e => setNewMilestoneDomain(e.target.value as any)}
+                      style={{ background: '#070c09', border: '1px solid #243d2c', borderRadius: 6, padding: '6px 10px', color: '#fff', fontSize: 11 }}
+                    >
+                      <option value="follow_through">Follow-through</option>
+                      <option value="schedule_boundary">Schedule boundary</option>
+                      <option value="coding_milestone">Coding milestone</option>
+                      <option value="study_prep">Study prep</option>
+                      <option value="financial_buffer">Financial buffer</option>
+                    </select>
+                    <button
+                      type="button"
+                      className="analyze-button"
+                      style={{ height: 34, padding: '0 16px', fontSize: 11 }}
+                      onClick={handleCreateMilestone}
+                      disabled={!userToken || !newMilestoneText.trim() || !newMilestoneCriteria.trim()}
+                    >
+                      <Plus size={12} /> Log Commitment
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Predictions List */}
+              <div>
+                <strong style={{ fontSize: 12, color: '#f1f7f2', display: 'block', marginBottom: 8 }}>Active & Past Predictions</strong>
+                {(!calibrationReport?.predictions || calibrationReport.predictions.length === 0) ? (
+                  <div style={{ padding: 16, background: '#101a14', borderRadius: 8, fontSize: 11, color: '#889f8f', textAlign: 'center' }}>
+                    No predictions recorded yet. Create one above to begin calibration scoring.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {calibrationReport.predictions.map(pred => {
+                      const status = pred.resolved ? (pred.outcome ? 'CONFIRMED_TRUE' : 'CONFIRMED_FALSE') : 'PENDING';
+                      return (
+                        <div key={pred.id} style={{ padding: 12, background: '#111c15', border: '1px solid #203526', borderRadius: 8 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+                            <span style={{ fontSize: 10, color: '#8dd99c', textTransform: 'uppercase', fontWeight: 600 }}>{pred.domain} · Horizon {pred.horizon_days}d</span>
+                            <span className={`prov-badge ${status === 'CONFIRMED_TRUE' ? 'prov-fact' : status === 'CONFIRMED_FALSE' ? 'prov-unknown' : 'prov-calc'}`}>
+                              {status}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: 11, color: '#e5ece7', margin: '0 0 6px' }}>{pred.statement}</p>
+                          <div style={{ fontSize: 10, color: '#889f8f', marginBottom: 8 }}>Criteria: {pred.resolution_criteria}</div>
+                          {!pred.resolved && (
+                            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                              <button
+                                type="button"
+                                className="text-button"
+                                style={{ padding: '3px 10px', fontSize: 10, borderColor: '#34d399', color: '#86efac' }}
+                                onClick={() => handleResolveMilestone(pred.id, true)}
+                              >
+                                ✓ Confirmed True
+                              </button>
+                              <button
+                                type="button"
+                                className="text-button"
+                                style={{ padding: '3px 10px', fontSize: 10, borderColor: '#f87171', color: '#fca5a5' }}
+                                onClick={() => handleResolveMilestone(pred.id, false)}
+                              >
+                                ✗ Missed / False
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Share Decision Memo Modal */}
+        {showShareModal && result && (
+          <div className="modal-backdrop" onClick={() => setShowShareModal(false)}>
+            <div className="modal-window" style={{ maxWidth: 620 }} onClick={e => e.stopPropagation()}>
+              <div className="modal-title-row">
+                <h3><Share2 size={18} color="#34d399" /> Decision Memo Brief</h3>
+                <button type="button" className="icon-button" onClick={() => setShowShareModal(false)}><Trash2 size={14} /></button>
+              </div>
+              <p style={{ fontSize: 11, color: '#97aba0', margin: '0 0 12px' }}>
+                Structured executive brief ready to share with mentors, advisors, or on social media.
+              </p>
+              <textarea
+                rows={12}
+                readOnly
+                style={{ width: '100%', background: '#0a100c', border: '1px solid #233a2a', borderRadius: 8, padding: 12, color: '#c7d6cb', fontSize: 11, fontFamily: 'monospace', lineHeight: 1.5 }}
+                value={`# ANTEVORTA DECISION BRIEF: ${draft.question}\nPlanning Horizon: ${result.constraints.time_horizon_months} months\nStatus: ${result.constraints.overall_status}\n\n## Evaluated Options:\n` +
+                  result.constraints.option_assessments.map((a, i) => `${i + 1}. ${a.option_name}\n   - Feasibility: ${a.overall_status}\n   - Time Headroom: ${hours(a.weekly_headroom_hours)}\n   - Budget Headroom: ${money(a.projected_budget_headroom_npr)}\n   - Runway: ${a.runway_months !== null ? `${a.runway_months} mo` : 'Indefinite'}`).join('\n\n') +
+                  `\n\n## Recommended Reversible Experiment:\n${result.narrative.reversible_experiment}\n\nBuilt with Antevorta & Meta Model API for #MetaAIHackathon\n"Test your decisions before you live them."`}
+              />
+              <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+                <button
+                  type="button"
+                  className="analyze-button"
+                  style={{ flex: 1, height: 40 }}
+                  onClick={() => {
+                    const brief = `# ANTEVORTA DECISION BRIEF: ${draft.question}\nPlanning Horizon: ${result.constraints.time_horizon_months} months\nStatus: ${result.constraints.overall_status}\n\n## Evaluated Options:\n` +
+                      result.constraints.option_assessments.map((a, i) => `${i + 1}. ${a.option_name} (${a.overall_status})\n   Time: ${hours(a.weekly_headroom_hours)} | Budget: ${money(a.projected_budget_headroom_npr)}`).join('\n') +
+                      `\n\n## Recommended Reversible Experiment:\n${result.narrative.reversible_experiment}\n\nBuilt with Antevorta for #MetaAIHackathon`;
+                    navigator.clipboard.writeText(brief);
+                    setNotice('Decision memo copied to clipboard!');
+                    window.setTimeout(() => setNotice(''), 3000);
+                  }}
+                >
+                  <Bookmark size={14} /> Copy to Clipboard
+                </button>
+                <a
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Testing my life decision before living it with Antevorta! 🧭 Verified using @MetaAI Muse Spark on Meta Model API. #MetaAIHackathon`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-button"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', height: 40, borderColor: '#34d399', color: '#8dd99c' }}
+                >
+                  <Share2 size={14} /> Share on X
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
         <footer className="footer">
           <a className="brand footer-brand" href="#top">
             <span className="brand-icon"><Compass size={18} /></span>
@@ -2046,6 +2771,10 @@ function AssessmentCard({
   weeklyCapacity,
   totalBudget,
   horizon,
+  onConsultFutureSelf,
+  onVisualizeOption,
+  visualScene,
+  visualLoading,
 }: {
   assessment: OptionAssessment;
   narrative?: AnalysisResponse['narrative']['option_analyses'][number];
@@ -2053,6 +2782,10 @@ function AssessmentCard({
   weeklyCapacity?: number | null;
   totalBudget?: number | null;
   horizon: number;
+  onConsultFutureSelf?: () => void;
+  onVisualizeOption?: () => void;
+  visualScene?: VisualScenarioResponse;
+  visualLoading?: boolean;
 }) {
   const hasTimeConflict = assessment.time_status === 'CONFLICT';
   const hasMoneyConflict = assessment.money_status === 'CONFLICT';
@@ -2116,6 +2849,46 @@ function AssessmentCard({
             <span className="prov-badge prov-scenario">SCENARIO</span>
           </div>
           <p>{narrative.main_tradeoff}</p>
+        </div>
+      )}
+
+      {/* Future Self & Visual Day in the Life Actions */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+        <button
+          type="button"
+          className="text-button"
+          style={{ flex: 1, padding: '4px 8px', fontSize: 11, borderColor: '#7c3aed', color: '#c4b5fd', background: 'rgba(124, 58, 237, 0.1)' }}
+          onClick={onConsultFutureSelf}
+          title="Consult 3-Year Future Self powered by Meta Model API"
+        >
+          <Sparkles size={12} /> Consult Future Self
+        </button>
+        <button
+          type="button"
+          className="text-button"
+          style={{ flex: 1, padding: '4px 8px', fontSize: 11, borderColor: '#059669', color: '#6ee7b7', background: 'rgba(5, 150, 105, 0.1)' }}
+          onClick={onVisualizeOption}
+          disabled={visualLoading}
+          title="Synthesize Day-in-the-Life Visual Preview with Meta Muse Image"
+        >
+          {visualLoading ? <LoaderCircle size={12} className="spin" /> : <ImageIcon size={12} />} Day-in-the-Life
+        </button>
+      </div>
+
+      {visualScene && (
+        <div style={{ marginTop: 12, padding: 12, background: '#0e1812', border: '1px solid #23422d', borderRadius: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#8dd99c', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <ImageIcon size={12} /> Day in the Life Simulation
+            </span>
+            <span className="prov-badge prov-scenario">MUSE IMAGE</span>
+          </div>
+          <p style={{ fontSize: 11, color: '#c7d6cb', margin: '0 0 6px', lineHeight: 1.5 }}>
+            {visualScene.visual_narrative}
+          </p>
+          <div style={{ fontSize: 10, color: '#889f8f', fontStyle: 'italic' }}>
+            Prompt: {visualScene.prompt_used.slice(0, 100)}...
+          </div>
         </div>
       )}
 

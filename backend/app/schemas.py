@@ -186,3 +186,181 @@ class SaveDecisionRequest(StrictModel):
 class AddRevisionRequest(StrictModel):
     input_data: DecisionInput
     analysis_data: AnalysisResponse
+
+
+# -----------------------------------------------------------------------------
+# Phase 9: Calibration Mirror & Behavioral Prediction (L4A)
+# -----------------------------------------------------------------------------
+
+class PredictionCreate(StrictModel):
+    statement: str = Field(min_length=5, max_length=500)
+    resolution_criteria: str = Field(min_length=5, max_length=500)
+    resolution_source: Literal["timestamped_submission", "github_api", "manual_checkin", "calendar_api"] = "manual_checkin"
+    domain: Literal["study_prep", "coding_milestone", "follow_through", "schedule_boundary", "financial_buffer"] = "follow_through"
+    horizon_days: int = Field(ge=1, le=90, default=14)
+    due_at: str = Field(min_length=10, max_length=40)
+    decision_id: str | None = None
+
+
+class PredictionResolve(StrictModel):
+    outcome: bool
+    resolution_note: str = Field(default="", max_length=500)
+
+
+class PredictionItem(StrictModel):
+    id: str
+    user_id: str
+    decision_id: str | None
+    statement: str
+    resolution_criteria: str
+    resolution_source: str
+    domain: str
+    horizon_days: int
+    due_at: str
+    p_twin: float
+    p_generic: float
+    p_baserate: float | None
+    qualitative_band: Literal["unlikely", "toss_up", "likely", "still_learning"]
+    resolved: bool
+    outcome: bool | None = None
+    resolved_at: str | None = None
+    resolution_note: str | None = None
+    brier_twin: float | None = None
+    brier_generic: float | None = None
+    created_at: str
+
+
+class CalibrationReport(StrictModel):
+    total_predictions: int
+    resolved_predictions: int
+    brier_twin: float | None
+    brier_generic: float | None
+    brier_skill_score: float | None
+    accuracy_rate: float | None
+    qualitative_status: str
+    interpretation: str
+    predictions: list[PredictionItem] = Field(default_factory=list)
+
+
+# -----------------------------------------------------------------------------
+# Phase 9: Person Model & Claim Store (L3)
+# -----------------------------------------------------------------------------
+
+class ClaimCreate(StrictModel):
+    predicate: Literal["VALUES", "WANTS", "FEARS", "TENDS_TO", "CONSTRAINED_BY", "COMMITTED_TO"]
+    object: str = Field(min_length=2, max_length=300)
+    domain: Literal["career", "academics", "finances", "planning", "wellbeing", "relationships"]
+    stated_support: float = Field(ge=0.0, le=1.0, default=0.8)
+    revealed_support: float = Field(ge=0.0, le=1.0, default=0.5)
+    half_life_days: int = Field(ge=7, le=1000, default=180)
+
+
+class ClaimItem(StrictModel):
+    id: str
+    user_id: str
+    predicate: str
+    object: str
+    domain: str
+    stated_support: float
+    revealed_support: float
+    effective_support: float
+    divergence_score: float
+    is_divergent: bool
+    half_life_days: int
+    user_disputed: bool
+    user_excluded: bool
+    created_at: str
+    last_updated: str
+
+
+class ClaimDivergenceCard(StrictModel):
+    claim_id: str
+    title: str
+    stated_description: str
+    revealed_description: str
+    divergence_score: float
+    recommended_inquiry: str
+
+
+# -----------------------------------------------------------------------------
+# Phase 9: Interactive Decision DAG (L6)
+# -----------------------------------------------------------------------------
+
+class DAGNode(StrictModel):
+    id: str
+    label: str
+    type: Literal["decision", "option", "prereq", "resource", "bottleneck", "experiment", "outcome"]
+    status: Literal["FEASIBLE", "CONFLICT", "PENDING", "UNKNOWN", "VERIFIED"]
+    details: str
+    x: float
+    y: float
+
+
+class DAGEdge(StrictModel):
+    id: str
+    source: str
+    target: str
+    label: str = ""
+    status: Literal["active", "blocked", "warning"] = "active"
+
+
+class DecisionDAG(StrictModel):
+    nodes: list[DAGNode]
+    edges: list[DAGEdge]
+    critical_bottlenecks: list[str]
+    recommended_path: str
+
+
+# -----------------------------------------------------------------------------
+# Phase 9: Future Self Voice & Reflection
+# -----------------------------------------------------------------------------
+
+class FutureSelfRequest(StrictModel):
+    option_id: str
+    decision: DecisionInput
+    time_horizon_years: int = Field(ge=1, le=10, default=3)
+    tone: Literal["reflective", "analytical", "direct"] = "reflective"
+
+
+class FutureSelfResponse(StrictModel):
+    option_id: str
+    option_name: str
+    horizon_years: int
+    perspective: str
+    dialogue_transcript: str
+    hardest_tradeoff: str
+    what_i_wish_i_knew: str
+    recommended_micro_experiment: str
+    disclaimer: str = "Simulated reflection based strictly on supplied constraints and claims; not a forecast or psychic prediction."
+
+
+# -----------------------------------------------------------------------------
+# Phase 9: Multimodal Voice Dictation & Visual Scenario Generation
+# -----------------------------------------------------------------------------
+
+class VoiceTranscribeRequest(StrictModel):
+    audio_text: str = Field(min_length=5, max_length=5000)
+    language: str = "en"
+
+
+class VoiceTranscribeResponse(StrictModel):
+    raw_transcript: str
+    extracted_question: str
+    parsed_input: DecisionInput
+    confidence_note: str
+
+
+class VisualScenarioRequest(StrictModel):
+    option_id: str
+    option_name: str
+    description: str
+    horizon_months: int = 12
+
+
+class VisualScenarioResponse(StrictModel):
+    option_id: str
+    option_name: str
+    image_url: str
+    prompt_used: str
+    visual_narrative: str
+    provider: str

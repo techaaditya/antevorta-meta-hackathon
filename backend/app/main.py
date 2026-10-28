@@ -15,16 +15,26 @@ from backend.app.schemas import (
     AnalysisResponse, DecisionInput, ToolTraceItem, RecalculateRequest, RecalculateResponse,
     RegisterUserRequest, SaveDecisionRequest, AddRevisionRequest,
     ClarificationReport, VerificationReport, VerifiedCitation,
+    PredictionCreate, PredictionResolve, PredictionItem, CalibrationReport,
+    ClaimCreate, ClaimItem, ClaimDivergenceCard, DecisionDAG,
+    FutureSelfRequest, FutureSelfResponse,
+    VoiceTranscribeRequest, VoiceTranscribeResponse, VisualScenarioRequest, VisualScenarioResponse,
 )
 from backend.app.services.constraint_engine import assess_decision, recalculate_with_overrides
 from backend.app.services.meta_agent import run_meta_agent, MetaAgentError
 from backend.app.services.narrative import build_fallback_narrative, validate_narrative, contains_unsupported_probability
 from backend.app.services.clarification import analyze_clarity
 from backend.app.services.grounding import retrieve_grounded_citations
+from backend.app.services.calibration_engine import register_new_prediction, compute_calibration_report, resolve_prediction_record
+from backend.app.services.person_model import initialize_default_claims_if_empty, calculate_claim_decay_and_divergence, get_divergence_report
+from backend.app.services.scenario_dag import build_decision_dag
+from backend.app.services.future_self import generate_future_self_reflection
+from backend.app.services.multimodal import parse_spoken_dictation, generate_visual_scenario
 from backend.app.db import (
     apply_migrations, register_user, authenticate_token, create_decision,
     add_decision_revision, list_user_decisions, get_decision_details,
     delete_decision, export_all_user_data, purge_user_account,
+    create_claim, list_claims, dispute_claim, exclude_claim, delete_claim,
     NotFoundError, OwnershipError, DatabaseError,
 )
 
@@ -280,3 +290,144 @@ def purge_account(user: dict[str, Any] = Depends(get_current_user)):
     """Cascade purge user account and all personal decision history."""
     purge_user_account(user["id"])
     return {"status": "purged", "message": "All user data and decision history have been permanently deleted."}
+
+
+# -----------------------------------------------------------------------------
+# Phase 9: Interactive Decision DAG & Visual Graph (L6)
+# -----------------------------------------------------------------------------
+
+@app.post("/api/dag", response_model=DecisionDAG)
+def get_decision_dag(request: DecisionInput):
+    """Generate structured node-and-edge decision graph."""
+    _enforce_analysis_rate_limit()
+    report = assess_decision(request)
+    return build_decision_dag(request, report)
+
+
+# -----------------------------------------------------------------------------
+# Phase 9: Grounded Future Self Voice & Reflection
+# -----------------------------------------------------------------------------
+
+@app.post("/api/future-self", response_model=FutureSelfResponse)
+def get_future_self(request: FutureSelfRequest):
+    """Generate grounded Future Self reflection for a specific decision branch."""
+    _enforce_analysis_rate_limit()
+    return generate_future_self_reflection(request)
+
+
+# -----------------------------------------------------------------------------
+# Phase 9: Multimodal Extensions (Voice Dictation & Visual Scenarios)
+# -----------------------------------------------------------------------------
+
+@app.post("/api/multimodal/transcribe", response_model=VoiceTranscribeResponse)
+def transcribe_spoken_decision(request: VoiceTranscribeRequest):
+    """Parse spoken voice dictation into typed DecisionInput."""
+    _enforce_analysis_rate_limit()
+    return parse_spoken_dictation(request)
+
+
+@app.post("/api/multimodal/visualize", response_model=VisualScenarioResponse)
+def visualize_option_scenario(request: VisualScenarioRequest):
+    """Generate day-in-the-life visual scene for a decision branch."""
+    _enforce_analysis_rate_limit()
+    return generate_visual_scenario(request)
+
+
+# -----------------------------------------------------------------------------
+# Phase 9: Person Model & Claim Store (L3)
+# -----------------------------------------------------------------------------
+
+@app.post("/api/claims", response_model=ClaimItem, status_code=201)
+def create_person_claim(payload: ClaimCreate, user: dict[str, Any] = Depends(get_current_user)):
+    row = create_claim(
+        user_id=user["id"],
+        predicate=payload.predicate,
+        object_=payload.object,
+        domain=payload.domain,
+        stated_support=payload.stated_support,
+        revealed_support=payload.revealed_support,
+        half_life_days=payload.half_life_days,
+    )
+    return calculate_claim_decay_and_divergence(row)
+
+
+@app.get("/api/claims", response_model=list[ClaimItem])
+def get_person_claims(user: dict[str, Any] = Depends(get_current_user)):
+    return initialize_default_claims_if_empty(user["id"])
+
+
+@app.post("/api/claims/{claim_id}/dispute")
+def dispute_person_claim(claim_id: str, user: dict[str, Any] = Depends(get_current_user)):
+    try:
+        dispute_claim(user["id"], claim_id)
+        return {"status": "updated", "claim_id": claim_id}
+    except NotFoundError:
+        raise HTTPException(status_code=404, detail="Claim not found.")
+    except OwnershipError:
+        raise HTTPException(status_code=403, detail="Forbidden: you do not own this claim.")
+
+
+@app.post("/api/claims/{claim_id}/exclude")
+def exclude_person_claim(claim_id: str, user: dict[str, Any] = Depends(get_current_user)):
+    try:
+        exclude_claim(user["id"], claim_id)
+        return {"status": "updated", "claim_id": claim_id}
+    except NotFoundError:
+        raise HTTPException(status_code=404, detail="Claim not found.")
+    except OwnershipError:
+        raise HTTPException(status_code=403, detail="Forbidden: you do not own this claim.")
+
+
+@app.delete("/api/claims/{claim_id}")
+def remove_person_claim(claim_id: str, user: dict[str, Any] = Depends(get_current_user)):
+    try:
+        delete_claim(user["id"], claim_id)
+        return {"status": "deleted", "claim_id": claim_id}
+    except NotFoundError:
+        raise HTTPException(status_code=404, detail="Claim not found.")
+    except OwnershipError:
+        raise HTTPException(status_code=403, detail="Forbidden: you do not own this claim.")
+
+
+@app.get("/api/claims/divergence", response_model=list[ClaimDivergenceCard])
+def get_claims_divergence(user: dict[str, Any] = Depends(get_current_user)):
+    return get_divergence_report(user["id"])
+
+
+# -----------------------------------------------------------------------------
+# Phase 9: Calibration Mirror & Behavioral Prediction (L4A)
+# -----------------------------------------------------------------------------
+
+@app.post("/api/predictions", response_model=dict, status_code=201)
+def create_prediction(payload: PredictionCreate, user: dict[str, Any] = Depends(get_current_user)):
+    return register_new_prediction(user["id"], payload)
+
+
+@app.get("/api/predictions", response_model=list[dict])
+def get_user_predictions(user: dict[str, Any] = Depends(get_current_user)):
+    from backend.app.db import list_predictions
+    return list_predictions(user["id"])
+
+
+@app.post("/api/predictions/{prediction_id}/resolve", response_model=dict)
+def resolve_prediction(
+    prediction_id: str,
+    payload: PredictionResolve,
+    user: dict[str, Any] = Depends(get_current_user),
+):
+    try:
+        return resolve_prediction_record(
+            user_id=user["id"],
+            prediction_id=prediction_id,
+            outcome=payload.outcome,
+            resolution_note=payload.resolution_note,
+        )
+    except NotFoundError:
+        raise HTTPException(status_code=404, detail="Prediction not found.")
+    except OwnershipError:
+        raise HTTPException(status_code=403, detail="Forbidden: you do not own this prediction.")
+
+
+@app.get("/api/calibration", response_model=CalibrationReport)
+def get_calibration_stats(user: dict[str, Any] = Depends(get_current_user)):
+    return compute_calibration_report(user["id"])
