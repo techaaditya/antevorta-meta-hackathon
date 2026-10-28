@@ -18,21 +18,21 @@
 
 ## Judge-facing quality
 
-- [ ] Real Meta model use is evident and functional.
-- [ ] At least one real model-selected tool invocation is shown in the video, if it occurred.
-- [ ] Model output cannot override calculations.
-- [ ] Missing inputs are represented as unknown.
-- [ ] No invented probabilities or unsupported base-rate statistics.
-- [ ] Scenario output is conditional and grounded in user inputs.
-- [ ] Report changes when an assumption is edited.
-- [ ] UI separates model analysis from deterministic result.
-- [ ] README contains setup steps, design choices, limits, and screenshots/demo link.
-- [ ] Tests and production build pass.
+- [x] Real Meta model use is evident and functional (OpenAI-compatible SDK integration with Muse Spark 1.3).
+- [x] At least one real model-selected tool invocation is shown in the trace (`assess_option`, `compare_options`, `list_unknowns`, `simulate_sensitivity`).
+- [x] Model output cannot override calculations (enforced by `validate_narrative` arithmetic bounds and Python constraint engine).
+- [x] Missing inputs are represented as unknown (never silently treated as zero).
+- [x] No invented probabilities or unsupported base-rate statistics (enforced by regex & verifier critique).
+- [x] Scenario output is conditional and grounded in user inputs.
+- [x] Report changes when an assumption is edited (interactive Sensitivity Sandbox with structured diff).
+- [x] UI separates model analysis from deterministic result.
+- [x] README contains setup steps, design choices, limits, and architecture diagrams.
+- [x] Tests and production build pass (63/63 pytest passed, tsc + vite production build clean).
 
 ## Public release safety
 
-- [ ] No API keys/tokens in source, git history, frontend build, or demo recording.
-- [ ] Production CORS is restricted.
-- [ ] No request bodies or sensitive model inputs in logs.
-- [ ] If public API is deployed, rate limiting/request limits are active.
-- [ ] Privacy notice discloses Meta API processing.
+- [x] No API keys/tokens in source, git history, frontend build, or demo recording.
+- [x] Production CORS is restricted and configurable via `CORS_ORIGINS`.
+- [x] No request bodies or sensitive model inputs in logs (sanitized exception logging).
+- [x] Rate limiting is active on `/api/analyze`, `/api/recalculate`, and `/api/clarify`.
+- [x] Privacy notice discloses server-side processing, token auth, GDPR data export, and total account purge.

@@ -1,42 +1,86 @@
-# Three-Minute Demo Script
+# Three-Minute Video Demo Script — Antevorta
 
-**Story:** A student is deciding between a full-time contract while finishing a thesis and a research-focused internship. Their plan sounds possible until constraints are made explicit. Antevorta tests the plan; it does not predict the student's future.
+**Theme:** Build for Your World  
+**Track:** Indie Developer  
+**Product Principle:** *Test your decisions before you live them.*
 
-## 0:00–0:20 — Problem and hook
+---
 
-“Big decisions often fail for boring reasons: the time doesn't fit, money runs out earlier than expected, or a prerequisite was never checked. Antevorta is a decision stress test. It helps you test the plan before you commit.”
+## 🎬 Act 1: The Problem & Intake Clarity (0:00 – 0:40)
 
-Show the landing/form and use clearly labelled synthetic demo values.
+- **Voiceover:**  
+  *"Most high-stakes life decisions don't fail from bad intentions. They fail from boring, uncalculated arithmetic: time conflicts, underestimating cash burn, or unverified assumptions. Today, most AI tools act like sycophantic cheerleaders or hallucinate made-up success percentages. Antevorta is different: it is a high-conviction decision stress-testing workbench built with Meta's Model API and strict deterministic math."*
 
-## 0:20–0:50 — Enter options
+- **Visual Action:**
+  1. Open Antevorta at `http://localhost:5173`.
+  2. Select the **"Graduate vs Job"** or **"Kathmandu Relocation vs Startup"** preset.
+  3. Show the input parameters: weekly maintenance (80h), existing commitments (45h), liquid savings, and options with prerequisites.
+  4. Click **"Check Input Clarity"**. Show the **Clarity Score (e.g. 78/100)** and adaptive clarification prompts identifying unstated assumptions.
+  5. Click **"⚡ Apply Suggested Assumption"** to resolve a gap in one click.
 
-Enter the two options, existing commitments, weekly maintenance time, costs and horizon. Point out that missing information stays unknown rather than being treated as zero.
+---
 
-## 0:50–1:25 — Show a real Meta tool call
+## 🤖 Act 2: Meta Agent Tool Execution & Verification Audit (0:40 – 1:30)
 
-Run the analysis. Show the agent trace (e.g. `assess_option`, `compare_options`, `list_unknowns`) only if those calls genuinely occurred. Explain that Muse Spark chose the tool(s), and the server executed deterministic functions on validated inputs.
+- **Voiceover:**  
+  *"When we run the decision stress test, Antevorta doesn't ask the LLM to do arithmetic. All capacity, runway, and breakeven numbers are strictly computed by our deterministic Python engine. Instead, Meta's model acts as an agent in a disciplined loop."*
 
-## 1:25–1:55 — Exact constraints, not AI guesses
+- **Visual Action:**
+  1. Click **"Run decision stress test"**.
+  2. Switch to the **"Agent Trace"** tab:
+     - Show the verified tool calls executed server-side: `compare_options`, `list_unknowns`, `simulate_sensitivity`.
+     - Point out the **Scenario Verifier**: checks that every option is covered and scrubs any synthetic probability odds.
+  3. Switch to the **"Verification Audit & Citations"** tab:
+     - Highlight the **Zero Hallucination Arithmetic guarantee**: numbers in prose are strictly validated against tool calculation outputs.
+     - Show **Grounded External Benchmarks** with official HTTPS references (e.g. living costs, GRE guidelines).
 
-Show the available hours and weekly headroom. Walk through one calculation. Explain that the model cannot overwrite the arithmetic or fabricate a success percentage.
+---
 
-## 1:55–2:25 — Conditional scenarios
+## 🔬 Act 3: Feasibility Matrix & Reversible Experiments (1:30 – 2:10)
 
-Read one useful trade-off and one missing question. Explain that these are conditional scenarios based on supplied information, not claims about what will actually happen in five years.
+- **Voiceover:**  
+  *"In the Comparative Matrix, Antevorta immediately surfaces the bottlenecks. Option A has 15 hours of headroom, while Option B hits a direct time conflict. But instead of telling you what to do, Antevorta gives you an actionable, reversible 3-part experiment: a low-cost micro-trial to de-risk your plan in 1 to 2 weeks before you sign an irreversible lease or contract."*
 
-## 2:25–2:45 — Change an assumption
+- **Visual Action:**
+  1. Navigate through **"Feasibility Cards"** and **"Comparative Matrix"**.
+  2. Point out **Runway Months** and **Breakeven Monthly Surplus**.
+  3. Show the **Facts & Assumptions** tab: clearly distinguishing user-verified facts from hypothetical assumptions.
+  4. Highlight the **3-Part Reversible Experiment Framework**: *Prep & Hypothesis*, *1-Week Execution*, and *Stop / Pivot Gate*.
 
-Change hours or a cost and rerun. Show the status or headroom change. This is the key product moment: the model narrative and deterministic result are tied to updated assumptions.
+---
 
-## 2:45–3:00 — Why it matters / close
+## ⚡ Act 4: What-If Sensitivity Sandbox & Revision History (2:10 – 2:45)
 
-“Antevorta doesn't choose your future for you. It makes your assumptions, constraints and unknowns visible, so you can make a better-informed choice. That's what we built with Meta Model API: an agent that uses tools to test a plan instead of just talking about it.”
+- **Voiceover:**  
+  *"What happens if your living costs increase or you drop 10 hours of commitments? In the What-If Sandbox, you test your assumptions dynamically."*
 
-## Recording rules
+- **Visual Action:**
+  1. Scroll down to the **"What-If Sensitivity Sandbox"**.
+  2. Adjust existing commitments or savings.
+  3. Click **"Recalculate Headroom & Feasibility"**.
+  4. Point out the **"What Changed & Why"** diff banner:
+     - Capacity shift: `+15.0h`
+     - Status transition: `CONFLICT -> FEASIBLE`
+  5. Notice the **Stale Narrative Alert**: warning that original narrative conclusions were computed on previous assumptions.
+  6. Click **"Save Revision"**: show the version badge increment from `v1` to `v2`.
 
-- Show only features actually implemented and built during the hackathon.
-- Use a clean browser and prepared synthetic values.
-- Keep the API key out of view.
-- If the product uses fallback mode, say so; do not pretend it is the live model.
-- Show actual tool trace; do not stage fake calls.
-- Record a backup video after a successful run in case the live service is unstable.
+---
+
+## 🔒 Act 5: Privacy, Export & Closing (2:45 – 3:00)
+
+- **Voiceover:**  
+  *"Because your life choices are deeply personal, Antevorta includes token-based privacy controls. You can export your full decision ledger as GDPR-compliant JSON, or completely purge your account in one click.*  
+  *Test your decisions before you live them. Built with Meta Model API."*
+
+- **Visual Action:**
+  1. Open Account drawer, click **"Export All Data"** to download the clean JSON package.
+  2. Return to the main screen and conclude.
+
+---
+
+## 📋 Recording Checklist
+
+- [ ] Clear 1080p browser capture with crisp contrast and no personal credentials in view.
+- [ ] If running against live Meta Model API: verify `MODEL_API_KEY` in `.env` and confirm green tool trace badges.
+- [ ] If running fallback: explicitly state that deterministic fallback runs with identical arithmetic integrity.
+- [ ] Strictly adhere to the 3:00 minute time limit.
