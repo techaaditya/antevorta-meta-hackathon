@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
@@ -123,3 +123,14 @@ class AnalysisResponse(StrictModel):
     narrative: DecisionNarrative
     tool_trace: list[ToolTraceItem]
     verifier_status: Literal["passed", "fallback", "rejected"]
+
+
+
+class RecalculateRequest(StrictModel):
+    base_request: DecisionInput
+    overrides: dict[str, Any]
+
+
+class RecalculateResponse(StrictModel):
+    updated_constraints: ConstraintReport
+    diff: dict[str, Any]

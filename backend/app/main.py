@@ -8,8 +8,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.config import CORS_ORIGINS, MODEL_API_KEY, META_MODEL_ID, APP_ENV, MAX_ANALYSES_PER_MINUTE
-from backend.app.schemas import AnalysisResponse, DecisionInput, ToolTraceItem
-from backend.app.services.constraint_engine import assess_decision
+from backend.app.schemas import AnalysisResponse, DecisionInput, ToolTraceItem, RecalculateRequest, RecalculateResponse
+from backend.app.services.constraint_engine import assess_decision, recalculate_with_overrides
 from backend.app.services.meta_agent import run_meta_agent, MetaAgentError
 from backend.app.services.narrative import build_fallback_narrative, validate_narrative
 
@@ -85,3 +85,15 @@ def analyze(request: DecisionInput):
         question=request.question, constraints=constraint_report, narrative=narrative,
         tool_trace=trace, verifier_status=verifier_status,
     )
+
+
+
+@app.post("/api/recalculate", response_model=RecalculateResponse)
+def recalculate(payload: RecalculateRequest):
+    _enforce_analysis_rate_limit()
+    try:
+        updated_report, diff = recalculate_with_overrides(payload.base_request, payload.overrides)
+        return RecalculateResponse(updated_constraints=updated_report, diff=diff)
+    except Exception as exc:
+        logger.warning("Recalculation error: %s", str(exc))
+        raise HTTPException(status_code=422, detail=f"Recalculation error: {str(exc)}")

@@ -26,3 +26,17 @@ export async function analyzeDecision(input: DecisionInput): Promise<AnalysisRes
     body: JSON.stringify(input),
   }));
 }
+
+
+export async function recalculateConstraints(
+  base_request: DecisionInput,
+  overrides: Record<string, unknown>
+): Promise<import('./types').RecalculateResponse> {
+  return parseResponse<import('./types').RecalculateResponse>(
+    await fetch(`${API_BASE}/api/recalculate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base_request, overrides }),
+    })
+  );
+}

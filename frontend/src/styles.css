@@ -49,3 +49,54 @@
 .whatif-banner{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 17px;border:1px solid #38553f;border-radius:10px;background:#142318;margin-top:16px}
 .whatif-left{display:flex;align-items:center;gap:10px}
 .whatif-btn{display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #a3d7aa;border-radius:7px;background:var(--green);color:#122316;font-size:11px;font-weight:700}
+
+
+/* Phase 4 Distinctive Decision Analysis Styles */
+.stale-banner{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 18px;margin-bottom:18px;border:1px solid #7a5c2d;border-radius:10px;background:#241d11;color:#f0cf90}
+.stale-left{display:flex;align-items:center;gap:10px}
+.stale-left strong{font-size:12px;display:block}
+.stale-left p{margin:2px 0 0;font-size:11px;color:#d4b476}
+.stale-actions{display:flex;gap:8px;flex-shrink:0}
+.stale-btn-recalc{padding:7px 11px;border:1px solid #a48243;border-radius:6px;background:#352914;color:#edd093;font-size:10px;font-weight:700;display:flex;align-items:center;gap:5px}
+.stale-btn-rerun{padding:7px 11px;border:1px solid #a2d6a9;border-radius:6px;background:var(--green);color:#122316;font-size:10px;font-weight:700;display:flex;align-items:center;gap:5px}
+
+/* Provenance Tags */
+.prov-badge{display:inline-flex;align-items:center;gap:4px;font:9px var(--mono);padding:2px 6px;border-radius:4px;letter-spacing:.5px;text-transform:uppercase}
+.prov-fact{background:#17251c;border:1px solid #354e3c;color:#a2d6a9}
+.prov-calc{background:#152026;border:1px solid #2f4857;color:#8ccbe5}
+.prov-scenario{background:#221d2b;border:1px solid #4a3e5e;color:#cbacf2}
+.prov-unknown{background:#261f14;border:1px solid #57462c;color:#dec58d}
+
+.provenance-legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 14px;border:1px solid #29382d;border-radius:8px;background:#101712;margin:14px 0}
+.provenance-legend span{display:flex;align-items:center;gap:6px;font-size:10px;color:#91a395}
+
+/* Interactive What-If Sandbox */
+.whatif-sandbox{padding:18px;border:1px solid #334839;border-radius:12px;background:linear-gradient(150deg,#152319,#101913);margin-top:16px}
+.sandbox-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.sandbox-header h4{margin:0;font:600 13px var(--heading);color:#d0ded3;display:flex;align-items:center;gap:8px}
+.sandbox-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.sandbox-field{display:flex;flex-direction:column;gap:5px}
+.sandbox-field label{font-size:10px;color:#9cb2a2;font-weight:600}
+.sandbox-field input{height:34px;font-size:11px}
+
+/* Diff Card: What Changed & Why */
+.diff-card{padding:14px 16px;border:1px solid #3b5643;border-radius:9px;background:#142318;margin-top:14px}
+.diff-header{display:flex;align-items:center;gap:7px;color:#a3d7aa;font:600 12px var(--heading);margin-bottom:10px}
+.diff-content{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.diff-col h5{margin:0 0 6px;font:9px var(--mono);color:#92ab97;letter-spacing:1px;text-transform:uppercase}
+.diff-list{margin:0;padding-left:16px;font-size:11px;color:#cddad1;line-height:1.7}
+.diff-list li{margin-bottom:3px}
+.delta-tag{display:inline-block;padding:1px 5px;border-radius:3px;font:9px var(--mono);margin-left:4px}
+.delta-pos{background:#1b3823;color:#8dd99c;border:1px solid #2e5939}
+.delta-neg{background:#381c19;color:#f09d94;border:1px solid #5a2e28}
+
+/* Conflict Resolution Guide */
+.conflict-guide{margin-top:12px;padding:11px 13px;border:1px solid #633a36;border-radius:8px;background:#241614;color:#f2aba2}
+.conflict-guide strong{font-size:11px;display:block;margin-bottom:4px}
+.conflict-guide p{margin:0;font-size:10px;line-height:1.6;color:#e8b5af}
+
+/* Reversible Experiment 3-part framework */
+.experiment-framework{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+.exp-step{padding:11px 12px;border:1px solid #2c3c31;border-radius:8px;background:#111914}
+.exp-step span{font:9px var(--mono);letter-spacing:.8px;color:#8abf92;text-transform:uppercase;display:block;margin-bottom:4px}
+.exp-step p{margin:0;font-size:10px;line-height:1.6;color:#c5d4c8}

@@ -83,3 +83,24 @@ export type AnalysisResponse = {
 };
 
 export type ApiMetaStatus = { configured: boolean; model_id: string | null; message: string };
+
+
+export type OptionDelta = {
+  time_headroom_delta_hours: number | null;
+  budget_headroom_delta_npr: number | null;
+  previous_status: 'FEASIBLE' | 'CONFLICT' | 'UNKNOWN';
+  updated_status: 'FEASIBLE' | 'CONFLICT' | 'UNKNOWN';
+  status_changed: boolean;
+};
+
+export type RecalculateDiff = {
+  changed_assumptions: Record<string, { previous: unknown; updated: unknown }>;
+  capacity_delta_hours: number | null;
+  option_deltas: Record<string, OptionDelta>;
+  overall_status_transition: string;
+};
+
+export type RecalculateResponse = {
+  updated_constraints: ConstraintReport;
+  diff: RecalculateDiff;
+};

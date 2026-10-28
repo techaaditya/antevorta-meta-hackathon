@@ -99,3 +99,39 @@ def test_analyze_rejects_empty_question():
     p["question"] = "Short"
     response = client.post("/api/analyze", json=p)
     assert response.status_code == 422
+
+
+
+def test_recalculate_endpoint_computes_updated_constraints_and_diff():
+    base = payload()
+    body = {
+        "base_request": base,
+        "overrides": {
+            "savings_npr": 500000,
+            "existing_commitments_hours": 20,
+        }
+    }
+    response = client.post("/api/recalculate", json=body)
+    assert response.status_code == 200
+    data = response.json()
+    assert "updated_constraints" in data
+    assert "diff" in data
+    diff = data["diff"]
+    assert "savings_npr" in diff["changed_assumptions"]
+    assert diff["changed_assumptions"]["savings_npr"]["previous"] == 200000
+    assert diff["changed_assumptions"]["savings_npr"]["updated"] == 500000
+    assert diff["capacity_delta_hours"] == 15.0  # from 35h to 20h commitments (+15h capacity)
+    assert "option_job" in diff["option_deltas"]
+    assert diff["option_deltas"]["option_job"]["time_headroom_delta_hours"] == 15.0
+
+
+def test_recalculate_endpoint_rejects_invalid_overrides():
+    base = payload()
+    body = {
+        "base_request": base,
+        "overrides": {
+            "weekly_maintenance_hours": -10,  # invalid negative hours
+        }
+    }
+    response = client.post("/api/recalculate", json=body)
+    assert response.status_code == 422

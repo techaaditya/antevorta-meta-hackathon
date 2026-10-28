@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   Activity, ArrowDownRight, ArrowRight, Check, CheckSquare, CircleAlert,
-  Clock3, Compass, Download, FileText, FlaskConical, GitBranch, KeyRound, Layers,
-  LoaderCircle, Plus, RefreshCw, ShieldCheck, Sparkles, Square, Table, Trash2,
-  Wallet, WandSparkles, Workflow,
+  Clock3, Compass, Download, FileText, FlaskConical, GitBranch, Info, KeyRound,
+  Layers, LoaderCircle, Plus, RefreshCw, ShieldCheck, Sparkles, Square,
+  Table, Target, Trash2, Wallet, WandSparkles, Workflow, Zap,
 } from 'lucide-react';
-import { analyzeDecision, getMetaStatus } from './api';
-import type { AnalysisResponse, DecisionInput, OptionAssessment, OptionInput } from './types';
+import { analyzeDecision, getMetaStatus, recalculateConstraints } from './api';
+import type {
+  AnalysisResponse, DecisionInput, OptionAssessment, OptionInput, RecalculateDiff,
+} from './types';
 
 const initialDraft: DecisionInput = {
   question: 'Should I pursue graduate research or accept a full-time contract while finishing my thesis?',
@@ -271,14 +273,23 @@ function validateDecisionInput(draft: DecisionInput): string[] {
 
 export default function App() {
   const [draft, setDraft] = useState<DecisionInput>(() => cloneDraft(initialDraft));
+  const [analyzedDraft, setAnalyzedDraft] = useState<DecisionInput | null>(null);
   const [result, setResult] = useState<AnalysisResponse | null>(null);
+  const [recalcDiff, setRecalcDiff] = useState<RecalculateDiff | null>(null);
   const [loading, setLoading] = useState(false);
+  const [recalcLoading, setRecalcLoading] = useState(false);
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [metaStatus, setMetaStatus] = useState<{ configured: boolean; model_id: string | null; message: string } | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'comparison' | 'facts' | 'scenarios' | 'trace'>('overview');
   const [notice, setNotice] = useState('');
   const [activePreset, setActivePreset] = useState<string>('academic');
+
+  // Interactive What-If Sandbox inputs
+  const [whatIfMaintenance, setWhatIfMaintenance] = useState<number | ''>('');
+  const [whatIfCommitments, setWhatIfCommitments] = useState<number | ''>('');
+  const [whatIfSavings, setWhatIfSavings] = useState<number | ''>('');
+  const [whatIfSurplus, setWhatIfSurplus] = useState<number | ''>('');
 
   useEffect(() => {
     getMetaStatus().then(setMetaStatus).catch(() => setMetaStatus(null));
@@ -294,8 +305,11 @@ export default function App() {
   const loadPreset = (presetId: string) => {
     const found = PRESETS.find(p => p.id === presetId);
     if (!found) return;
-    setDraft(cloneDraft(found.data));
+    const cloned = cloneDraft(found.data);
+    setDraft(cloned);
     setResult(null);
+    setAnalyzedDraft(null);
+    setRecalcDiff(null);
     setError('');
     setValidationErrors([]);
     setActivePreset(presetId);
@@ -304,8 +318,11 @@ export default function App() {
   };
 
   const handleStartBlank = () => {
-    setDraft(cloneDraft(blankDraft));
+    const blank = cloneDraft(blankDraft);
+    setDraft(blank);
     setResult(null);
+    setAnalyzedDraft(null);
+    setRecalcDiff(null);
     setError('');
     setValidationErrors([]);
     setActivePreset('blank');
@@ -333,6 +350,8 @@ export default function App() {
     if (draft.options.length <= 2) return;
     setDraft(current => ({ ...current, options: current.options.filter(option => option.id !== id) }));
     setResult(null);
+    setAnalyzedDraft(null);
+    setRecalcDiff(null);
   };
 
   const togglePrerequisite = (optionId: string, index: number) => {
@@ -380,6 +399,14 @@ export default function App() {
       };
       const response = await analyzeDecision(cleaned);
       setResult(response);
+      setAnalyzedDraft(cloneDraft(cleaned));
+      setRecalcDiff(null);
+      // Initialize what-if sandbox inputs
+      setWhatIfMaintenance(cleaned.weekly_maintenance_hours ?? '');
+      setWhatIfCommitments(cleaned.existing_commitments_hours ?? '');
+      setWhatIfSavings(cleaned.savings_npr ?? '');
+      setWhatIfSurplus(cleaned.monthly_surplus_npr ?? '');
+
       setActiveTab('overview');
       document.getElementById('analysis-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (e) {
@@ -389,9 +416,46 @@ export default function App() {
     }
   };
 
+  const handleQuickRecalculate = async (overridesToApply?: Record<string, unknown>) => {
+    if (!result) return;
+    const base = analyzedDraft || draft;
+    const overrides = overridesToApply || {
+      weekly_maintenance_hours: draft.weekly_maintenance_hours,
+      existing_commitments_hours: draft.existing_commitments_hours,
+      savings_npr: draft.savings_npr,
+      monthly_surplus_npr: draft.monthly_surplus_npr,
+      horizon_months: draft.horizon_months,
+      options: draft.options,
+    };
+    setRecalcLoading(true);
+    try {
+      const res = await recalculateConstraints(base, overrides);
+      setResult(prev => (prev ? { ...prev, constraints: res.updated_constraints } : null));
+      setRecalcDiff(res.diff);
+      setAnalyzedDraft(cloneDraft({ ...base, ...overrides } as DecisionInput));
+      setNotice('Constraints deterministically recalculated. Narrative marked updated.');
+      window.setTimeout(() => setNotice(''), 3600);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Recalculation failed.');
+    } finally {
+      setRecalcLoading(false);
+    }
+  };
+
+  const handleApplyWhatIfSandbox = () => {
+    const overrides: Record<string, unknown> = {};
+    if (whatIfMaintenance !== '') overrides.weekly_maintenance_hours = Number(whatIfMaintenance);
+    if (whatIfCommitments !== '') overrides.existing_commitments_hours = Number(whatIfCommitments);
+    if (whatIfSavings !== '') overrides.savings_npr = Number(whatIfSavings);
+    if (whatIfSurplus !== '') overrides.monthly_surplus_npr = Number(whatIfSurplus);
+    handleQuickRecalculate(overrides);
+  };
+
   const exportResult = () => {
     if (!result) return;
-    const blob = new Blob([JSON.stringify({ input: draft, result }, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ input: analyzedDraft || draft, result, diff: recalcDiff }, null, 2)], {
+      type: 'application/json',
+    });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
@@ -411,6 +475,12 @@ export default function App() {
   };
 
   const assessmentById = useMemo(() => new Map(result?.constraints.option_assessments.map(a => [a.option_id, a]) || []), [result]);
+
+  // Stale detection: if current draft inputs differ from analyzed draft
+  const isStale = useMemo(() => {
+    if (!result || !analyzedDraft) return false;
+    return JSON.stringify(draft) !== JSON.stringify(analyzedDraft);
+  }, [result, analyzedDraft, draft]);
 
   const capacityExhausted =
     draft.weekly_maintenance_hours !== null &&
@@ -447,6 +517,7 @@ export default function App() {
             <span><ShieldCheck size={15} /> Exact arithmetic</span>
             <span><Activity size={15} /> Prerequisite tracking</span>
             <span><GitBranch size={15} /> Zero simulated odds</span>
+            <span><Workflow size={15} /> What-if sensitivity</span>
           </div>
 
           <div className="preset-bar">
@@ -889,6 +960,44 @@ export default function App() {
             </div>
           ) : (
             <>
+              {isStale && (
+                <div className="stale-banner" role="alert">
+                  <div className="stale-left">
+                    <CircleAlert size={20} />
+                    <div>
+                      <strong>Analysis is Outdated / Stale</strong>
+                      <p>Inputs in the builder above have changed since this analysis was generated.</p>
+                    </div>
+                  </div>
+                  <div className="stale-actions">
+                    <button
+                      type="button"
+                      className="stale-btn-recalc"
+                      onClick={() => handleQuickRecalculate()}
+                      disabled={recalcLoading}
+                    >
+                      {recalcLoading ? <LoaderCircle className="spin" size={13} /> : <Zap size={13} />} Quick Recalculate
+                    </button>
+                    <button
+                      type="button"
+                      className="stale-btn-rerun"
+                      onClick={runAnalysis}
+                      disabled={loading}
+                    >
+                      {loading ? <LoaderCircle className="spin" size={13} /> : <RefreshCw size={13} />} Rerun Full Stress Test
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="provenance-legend">
+                <span style={{ fontWeight: 600, color: '#c3d4c6' }}><Info size={13} /> Claim Provenance:</span>
+                <span><span className="prov-badge prov-fact">USER FACT</span> Direct user input</span>
+                <span><span className="prov-badge prov-calc">MATH CALC</span> Pure deterministic arithmetic</span>
+                <span><span className="prov-badge prov-scenario">SCENARIO</span> Conditional model synthesis</span>
+                <span><span className="prov-badge prov-unknown">UNKNOWN</span> Missing info or unverified</span>
+              </div>
+
               <div className="report-status-row">
                 <div className="report-mode">
                   <span className={`mode-icon ${result.analysis_mode}`}><Sparkles size={17} /></span>
@@ -959,14 +1068,17 @@ export default function App() {
                       assessment={assessment}
                       narrative={result.narrative.option_analyses.find(n => n.option_id === assessment.option_id)}
                       index={index}
+                      weeklyCapacity={result.constraints.weekly_capacity_hours}
+                      totalBudget={result.constraints.option_assessments[0]?.projected_available_budget_npr}
+                      horizon={result.constraints.time_horizon_months}
                     />
                   ))}
                   <div className="report-panel full-width">
                     <div className="panel-title"><Wallet size={16} /><h3>Shared constraint ledger</h3></div>
                     <div className="metric-grid">
-                      <Metric label="Weekly discretionary capacity" value={hours(result.constraints.weekly_capacity_hours)} />
-                      <Metric label="Available funds over horizon" value={money(result.constraints.option_assessments[0]?.projected_available_budget_npr)} />
-                      <Metric label="Horizon" value={`${result.constraints.time_horizon_months} months`} />
+                      <Metric label="Weekly discretionary capacity" value={hours(result.constraints.weekly_capacity_hours)} badge="prov-calc" />
+                      <Metric label="Available funds over horizon" value={money(result.constraints.option_assessments[0]?.projected_available_budget_npr)} badge="prov-calc" />
+                      <Metric label="Horizon" value={`${result.constraints.time_horizon_months} months`} badge="prov-fact" />
                       <Metric label="Overall constraint status" value={statusText(result.constraints.overall_status)} />
                     </div>
                     <p className="calculation-note">{result.constraints.arithmetic_policy}</p>
@@ -990,6 +1102,22 @@ export default function App() {
                   <div className="report-panel">
                     <div className="panel-title"><FlaskConical size={16} /><h3>Recommended reversible experiment</h3></div>
                     <p>{result.narrative.reversible_experiment}</p>
+
+                    <div className="experiment-framework">
+                      <div className="exp-step">
+                        <span><Target size={12} /> 1. Target Unknown</span>
+                        <p>{result.constraints.important_unknowns[0] || 'Core workload flexibility'}</p>
+                      </div>
+                      <div className="exp-step">
+                        <span><Zap size={12} /> 2. 2-Week Action</span>
+                        <p>Time audit / conversation before signing any commitments.</p>
+                      </div>
+                      <div className="exp-step">
+                        <span><CircleAlert size={12} /> 3. Pivot Trigger</span>
+                        <p>Negative headroom or supervisor rejection of flexible cap.</p>
+                      </div>
+                    </div>
+
                     <div className="divider-line" />
                     <h4>Questions to answer before deciding:</h4>
                     <ul className="clean-list">
@@ -1050,23 +1178,105 @@ export default function App() {
                     </table>
                   </div>
 
-                  <div className="whatif-banner">
-                    <div className="whatif-left">
-                      <Workflow size={18} />
-                      <div>
-                        <strong>Want to test what happens if assumptions change?</strong>
-                        <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#96ab9a' }}>
-                          Modify your savings, available hours, or costs in the builder above and rerun the stress test.
-                        </p>
+                  {/* What-If Sandbox */}
+                  <div className="whatif-sandbox">
+                    <div className="sandbox-header">
+                      <h4><Workflow size={16} /> Interactive What-If Sensitivity Sandbox</h4>
+                      <button
+                        type="button"
+                        className="stale-btn-rerun"
+                        onClick={handleApplyWhatIfSandbox}
+                        disabled={recalcLoading}
+                      >
+                        {recalcLoading ? <LoaderCircle className="spin" size={13} /> : <Zap size={13} />} Test What-If Overrides
+                      </button>
+                    </div>
+                    <p style={{ margin: '0 0 14px', fontSize: '11px', color: '#97aba0' }}>
+                      Change personal baseline assumptions below to see instant deterministic recalculation and headroom delta.
+                    </p>
+                    <div className="sandbox-grid">
+                      <div className="sandbox-field">
+                        <label>Weekly Maintenance (h)</label>
+                        <input
+                          type="number"
+                          value={whatIfMaintenance}
+                          onChange={e => setWhatIfMaintenance(e.target.value === '' ? '' : Number(e.target.value))}
+                        />
+                      </div>
+                      <div className="sandbox-field">
+                        <label>Existing Commitments (h)</label>
+                        <input
+                          type="number"
+                          value={whatIfCommitments}
+                          onChange={e => setWhatIfCommitments(e.target.value === '' ? '' : Number(e.target.value))}
+                        />
+                      </div>
+                      <div className="sandbox-field">
+                        <label>Liquid Savings (NPR)</label>
+                        <input
+                          type="number"
+                          value={whatIfSavings}
+                          onChange={e => setWhatIfSavings(e.target.value === '' ? '' : Number(e.target.value))}
+                        />
+                      </div>
+                      <div className="sandbox-field">
+                        <label>Monthly Surplus (NPR)</label>
+                        <input
+                          type="number"
+                          value={whatIfSurplus}
+                          onChange={e => setWhatIfSurplus(e.target.value === '' ? '' : Number(e.target.value))}
+                        />
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      className="whatif-btn"
-                      onClick={() => document.getElementById('top')?.scrollIntoView({ behavior: 'smooth' })}
-                    >
-                      Tweak Assumptions & Rerun <ArrowRight size={13} />
-                    </button>
+
+                    {recalcDiff && (
+                      <div className="diff-card">
+                        <div className="diff-header">
+                          <Check size={14} /> Recalculation Results: What Changed & Why
+                        </div>
+                        <div className="diff-content">
+                          <div className="diff-col">
+                            <h5>Assumption Changes</h5>
+                            <ul className="diff-list">
+                              {Object.entries(recalcDiff.changed_assumptions).map(([key, val]) => (
+                                <li key={key}>
+                                  <strong>{key.replaceAll('_', ' ')}:</strong> {String(val.previous)} → {String(val.updated)}
+                                </li>
+                              ))}
+                              {recalcDiff.capacity_delta_hours !== null && (
+                                <li>
+                                  <strong>Capacity Delta:</strong>{' '}
+                                  <span className={`delta-tag ${recalcDiff.capacity_delta_hours >= 0 ? 'delta-pos' : 'delta-neg'}`}>
+                                    {recalcDiff.capacity_delta_hours >= 0 ? `+${recalcDiff.capacity_delta_hours}h` : `${recalcDiff.capacity_delta_hours}h`}
+                                  </span>
+                                </li>
+                              )}
+                            </ul>
+                          </div>
+                          <div className="diff-col">
+                            <h5>Impact on Options</h5>
+                            <ul className="diff-list">
+                              {Object.entries(recalcDiff.option_deltas).map(([optId, delta]) => {
+                                const optName = result.constraints.option_assessments.find(a => a.option_id === optId)?.option_name || optId;
+                                return (
+                                  <li key={optId}>
+                                    <strong>{optName}:</strong> Time delta{' '}
+                                    <span className={`delta-tag ${(delta.time_headroom_delta_hours || 0) >= 0 ? 'delta-pos' : 'delta-neg'}`}>
+                                      {(delta.time_headroom_delta_hours || 0) >= 0 ? `+${delta.time_headroom_delta_hours}h` : `${delta.time_headroom_delta_hours}h`}
+                                    </span>
+                                    {delta.status_changed && (
+                                      <span style={{ marginLeft: 6, color: '#f0b094' }}>
+                                        ({delta.previous_status} → {delta.updated_status})
+                                      </span>
+                                    )}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1077,7 +1287,7 @@ export default function App() {
                   <p>Antevorta strictly separates verified mathematical realities from subjective inputs provided by the user.</p>
                   <div className="facts-assumptions-grid">
                     <div className="fact-card">
-                      <h4>Verified Parameters & Stated Facts</h4>
+                      <h4><span className="prov-badge prov-fact">FACT</span> Verified Parameters & Stated Facts</h4>
                       <ul className="clean-list">
                         {(result.constraints.known_facts && result.constraints.known_facts.length > 0) ? (
                           result.constraints.known_facts.map((fact, i) => <li key={i}>{fact}</li>)
@@ -1087,7 +1297,7 @@ export default function App() {
                       </ul>
                     </div>
                     <div className="fact-card">
-                      <h4>User-Entered Assumptions</h4>
+                      <h4><span className="prov-badge prov-unknown">USER ASSUMPTIONS</span> Subjective Capacity Estimates</h4>
                       <ul className="clean-list">
                         {(result.constraints.user_assumptions && result.constraints.user_assumptions.length > 0) ? (
                           result.constraints.user_assumptions.map((assump, i) => <li key={i}>{assump}</li>)
@@ -1105,7 +1315,7 @@ export default function App() {
                   <div className="conditional-banner">
                     <GitBranch size={17} />
                     <div>
-                      <strong>Conditional paths, not predictions.</strong>
+                      <strong><span className="prov-badge prov-scenario">CONDITIONAL SCENARIOS</span> Grounded in Stated Assumptions</strong>
                       <p>Each scenario describes what to investigate under stated conditions. It does not claim to know the future.</p>
                     </div>
                   </div>
@@ -1201,10 +1411,13 @@ export default function App() {
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({ label, value, badge }: { label: string; value: string; badge?: string }) {
   return (
     <div className="metric">
-      <span>{label}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>{label}</span>
+        {badge && <span className={`prov-badge ${badge}`}>{badge === 'prov-calc' ? 'CALC' : 'FACT'}</span>}
+      </div>
       <strong>{value}</strong>
     </div>
   );
@@ -1214,11 +1427,20 @@ function AssessmentCard({
   assessment,
   narrative,
   index,
+  weeklyCapacity,
+  totalBudget,
+  horizon,
 }: {
   assessment: OptionAssessment;
   narrative?: AnalysisResponse['narrative']['option_analyses'][number];
   index: number;
+  weeklyCapacity?: number | null;
+  totalBudget?: number | null;
+  horizon: number;
 }) {
+  const hasTimeConflict = assessment.time_status === 'CONFLICT';
+  const hasMoneyConflict = assessment.money_status === 'CONFLICT';
+
   return (
     <article className="assessment-card">
       <div className="assessment-top">
@@ -1229,27 +1451,58 @@ function AssessmentCard({
       <h3>{assessment.option_name}</h3>
       <div className="assessment-metrics">
         <div>
-          <span>Time headroom</span>
-          <strong className={assessment.time_status === 'CONFLICT' ? 'negative' : ''}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Time headroom</span>
+            <span className="prov-badge prov-calc">MATH</span>
+          </div>
+          <strong className={hasTimeConflict ? 'negative' : ''}>
             {hours(assessment.weekly_headroom_hours)}
           </strong>
           <small>{assessment.time_status.toLowerCase()}</small>
         </div>
         <div>
-          <span>Budget headroom</span>
-          <strong className={assessment.money_status === 'CONFLICT' ? 'negative' : ''}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Budget headroom</span>
+            <span className="prov-badge prov-calc">MATH</span>
+          </div>
+          <strong className={hasMoneyConflict ? 'negative' : ''}>
             {money(assessment.projected_budget_headroom_npr)}
           </strong>
           <small>{assessment.money_status.toLowerCase()}</small>
         </div>
       </div>
+
       <p className="assessment-explanation">{assessment.explanation}</p>
+
+      {/* Math-grounded Conflict Resolution Guide */}
+      {(hasTimeConflict || hasMoneyConflict) && (
+        <div className="conflict-guide">
+          <strong>⚠️ Constraint Conflict Resolution:</strong>
+          {hasTimeConflict && assessment.weekly_headroom_hours !== null && (
+            <p>
+              • Weekly time deficit: <strong>{Math.abs(assessment.weekly_headroom_hours)} hours</strong>.
+              To make feasible, reduce option hours to &le; {weeklyCapacity}h/week, or reduce existing commitments.
+            </p>
+          )}
+          {hasMoneyConflict && assessment.projected_budget_headroom_npr !== null && (
+            <p>
+              • Budget deficit over {horizon}m: <strong>{money(Math.abs(assessment.projected_budget_headroom_npr))}</strong>.
+              To balance, increase monthly surplus to at least {money(assessment.breakeven_monthly_surplus_npr)}/mo, or reduce upfront costs.
+            </p>
+          )}
+        </div>
+      )}
+
       {narrative && (
         <div className="assessment-upside">
-          <span className="mini-label">THE TRADE-OFF</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span className="mini-label">THE TRADE-OFF</span>
+            <span className="prov-badge prov-scenario">SCENARIO</span>
+          </div>
           <p>{narrative.main_tradeoff}</p>
         </div>
       )}
+
       {assessment.verified_prerequisites && assessment.verified_prerequisites.length > 0 && (
         <div className="prereq-tags" style={{ marginBottom: 6 }}>
           {assessment.verified_prerequisites.map((item, i) => (
