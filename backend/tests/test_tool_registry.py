@@ -7,9 +7,23 @@ from test_constraint_engine import make_request
 def test_tool_schemas_are_allowlisted_per_request():
     request = make_request()
     schemas = schemas_for_request(request)
-    assert {tool["function"]["name"] for tool in schemas} == {"assess_option", "compare_options", "list_unknowns"}
+    assert {tool["function"]["name"] for tool in schemas} == {
+        "assess_option", "compare_options", "list_unknowns", "simulate_sensitivity"
+    }
     assess = next(tool for tool in schemas if tool["function"]["name"] == "assess_option")
     assert assess["function"]["parameters"]["properties"]["option_id"]["enum"] == ["option_job", "option_research"]
+    sim = next(tool for tool in schemas if tool["function"]["name"] == "simulate_sensitivity")
+    assert sim["function"]["parameters"]["properties"]["option_id"]["enum"] == ["option_job", "option_research"]
+
+
+def test_simulate_sensitivity_computes_deterministic_deltas():
+    request = make_request()
+    report = assess_decision(request)
+    result = execute_tool("simulate_sensitivity", {"option_id": "option_job", "hours_delta": 20.0, "monthly_cost_delta_npr": 50000.0}, request, report)
+    assert result["option_id"] == "option_job"
+    assert "simulated_weekly_headroom_hours" in result
+    assert "simulated_budget_headroom_npr" in result
+    assert "original_overall_status" in result
 
 
 def test_unknown_option_and_extra_arguments_are_rejected():

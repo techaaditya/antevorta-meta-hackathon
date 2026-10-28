@@ -122,3 +122,41 @@
 .revision-pills{display:flex;gap:5px;margin-top:6px}
 .rev-pill{font:9px var(--mono);padding:2px 6px;border-radius:4px;border:1px solid #334a38;background:#16251b;color:#a0d4a7;cursor:pointer}
 .rev-pill.active{border-color:var(--green);background:var(--green);color:#122316;font-weight:700}
+
+/* Phase 6: Adaptive Clarification, Verification Audit & Grounded Citations */
+.intake-action-row{display:flex;gap:10px;margin-top:14px}
+.clarity-check-button{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border:1px solid #385a42;border-radius:9px;background:#14251a;color:#a2dbae;font:600 12px var(--sans);cursor:pointer;transition:all .15s ease}
+.clarity-check-button:hover{background:#1c3525;border-color:#4da363}
+.clarity-panel{margin:16px 0;padding:18px;border:1px solid #324e39;border-radius:12px;background:#111a14}
+.clarity-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.clarity-score-chip{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font:12px var(--mono);font-weight:700}
+.clarity-score-good{background:#183821;color:#8dd99c;border:1px solid #2f613c}
+.clarity-score-fair{background:#3b3112;color:#f2cb63;border:1px solid #6b5722}
+.clarity-score-poor{background:#3d1c18;color:#f29a91;border:1px solid #6e322b}
+.clarity-meter-bar{width:100%;height:6px;background:#1e2c22;border-radius:999px;overflow:hidden;margin-bottom:14px}
+.clarity-meter-fill{height:100%;border-radius:999px;transition:width .3s ease}
+.clarity-prompts-list{display:flex;flex-direction:column;gap:10px}
+.clarity-prompt-item{padding:12px 14px;border:1px solid #283a2d;border-radius:8px;background:#0d140f;display:flex;flex-direction:column;gap:6px}
+.clarity-prompt-title{font-size:12px;font-weight:600;color:#d0e4d4}
+.clarity-prompt-why{font-size:11px;color:#8ba592;line-height:1.5}
+.clarity-prompt-action-row{display:flex;justify-content:space-between;align-items:center;margin-top:4px}
+.clarity-prompt-hint{font-size:10px;color:#a4c2ab}
+.btn-apply-patch{display:flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid #3c6e4a;border-radius:6px;background:#183321;color:#92e0a2;font:600 10px var(--mono);cursor:pointer}
+.btn-apply-patch:hover{background:#234d31;border-color:#55a069}
+
+/* Verification Audit & Citations */
+.audit-container{display:flex;flex-direction:column;gap:16px;margin-top:14px}
+.audit-badge-card{padding:16px;border:1px solid #2e4d37;border-radius:10px;background:#111e15}
+.audit-badge-card.hybrid{border-color:#3b5f7e;background:#101c24}
+.audit-status-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#d4ebd9}
+.audit-checks-list{list-style:none;padding:0;margin:10px 0 0 0;display:flex;flex-direction:column;gap:6px}
+.audit-check-item{display:flex;align-items:center;gap:7px;font-size:11px;color:#a9c6b0}
+
+.citations-panel{display:flex;flex-direction:column;gap:10px}
+.citation-card{padding:12px 14px;border:1px solid #2b3e31;border-radius:8px;background:#0f1611;display:flex;flex-direction:column;gap:5px}
+.citation-header{display:flex;justify-content:space-between;align-items:center}
+.citation-source{font-size:12px;font-weight:700;color:#a5d8b1}
+.citation-link{display:flex;align-items:center;gap:4px;font-size:11px;color:#58a6ff;text-decoration:none}
+.citation-link:hover{text-decoration:underline}
+.citation-snippet{font-size:11px;color:#c4d7c8;line-height:1.5}
+.citation-meta{font:9px var(--mono);color:#728a78}

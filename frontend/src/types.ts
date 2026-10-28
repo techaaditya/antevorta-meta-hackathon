@@ -63,6 +63,39 @@ export type OptionNarrative = {
   questions_to_resolve: string[];
 };
 
+export type ClarificationPrompt = {
+  id: string;
+  field_target: string;
+  option_id?: string | null;
+  question: string;
+  why_it_matters: string;
+  suggested_action: string;
+  suggested_patch: Record<string, any>;
+};
+
+export type ClarificationReport = {
+  clarity_score: number;
+  critical_gaps_count: number;
+  prompts: ClarificationPrompt[];
+};
+
+export type VerifiedCitation = {
+  source_name: string;
+  url: string;
+  retrieval_timestamp: string;
+  snippet: string;
+  verified: boolean;
+  query: string;
+};
+
+export type VerificationReport = {
+  all_options_covered: boolean;
+  zero_hallucination_arithmetic_passed: boolean;
+  unsupported_probabilities_prohibited: boolean;
+  audit_status: 'VERIFIED_DETERMINISTIC' | 'VERIFIED_HYBRID' | 'FALLBACK_SAFE';
+  verification_details: string[];
+};
+
 export type AnalysisResponse = {
   generated_at: string;
   analysis_mode: 'meta_agent' | 'deterministic_fallback';
@@ -80,6 +113,9 @@ export type AnalysisResponse = {
   };
   tool_trace: { tool: string; status: 'completed' | 'blocked' | 'failed'; detail: string }[];
   verifier_status: 'passed' | 'fallback' | 'rejected';
+  clarifications?: ClarificationPrompt[];
+  verification_report?: VerificationReport | null;
+  grounded_citations?: VerifiedCitation[];
 };
 
 export type ApiMetaStatus = { configured: boolean; model_id: string | null; message: string };

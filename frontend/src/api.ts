@@ -1,4 +1,4 @@
-import type { ApiMetaStatus, AnalysisResponse, DecisionInput } from './types';
+import type { ApiMetaStatus, AnalysisResponse, DecisionInput, ClarificationReport } from './types';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
 
@@ -21,6 +21,14 @@ export async function getMetaStatus(): Promise<ApiMetaStatus> {
 
 export async function analyzeDecision(input: DecisionInput): Promise<AnalysisResponse> {
   return parseResponse<AnalysisResponse>(await fetch(`${API_BASE}/api/analyze`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  }));
+}
+
+export async function getClarificationReport(input: DecisionInput): Promise<ClarificationReport> {
+  return parseResponse<ClarificationReport>(await fetch(`${API_BASE}/api/clarify`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),

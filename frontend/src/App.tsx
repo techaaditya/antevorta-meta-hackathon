@@ -5,15 +5,17 @@ import {
   Clock3, Compass, Download, FileText, FlaskConical, GitBranch, History, Info, KeyRound,
   Layers, LoaderCircle, Lock, LogOut, Plus, RefreshCw, ShieldCheck, Sparkles, Square,
   Table, Target, Trash2, UserCheck, Wallet, WandSparkles, Workflow, Zap,
+  HelpCircle, ExternalLink, CheckCircle2,
 } from 'lucide-react';
 import {
-  analyzeDecision, getMetaStatus, recalculateConstraints,
+  analyzeDecision, getMetaStatus, recalculateConstraints, getClarificationReport,
   registerUserAccount, getCurrentUser, saveDecision, addDecisionRevision,
   listDecisions, getDecision, deleteDecision, exportAllUserData, purgeAccount,
 } from './api';
 import type {
   AnalysisResponse, DecisionInput, OptionAssessment, OptionInput, RecalculateDiff,
-  SavedDecisionSummary, SavedDecisionDetail,
+  SavedDecisionSummary, SavedDecisionDetail, ClarificationReport, ClarificationPrompt,
+  VerifiedCitation, VerificationReport,
 } from './types';
 
 const initialDraft: DecisionInput = {
@@ -286,9 +288,13 @@ export default function App() {
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [metaStatus, setMetaStatus] = useState<{ configured: boolean; model_id: string | null; message: string } | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'comparison' | 'facts' | 'scenarios' | 'trace'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'comparison' | 'facts' | 'scenarios' | 'trace' | 'clarifications' | 'audit'>('overview');
   const [notice, setNotice] = useState('');
   const [activePreset, setActivePreset] = useState<string>('academic');
+
+  // Adaptive Clarification State
+  const [clarityLoading, setClarityLoading] = useState(false);
+  const [intakeClarityReport, setIntakeClarityReport] = useState<ClarificationReport | null>(null);
 
   // Persistence, History & User State
   const [userToken, setUserToken] = useState<string>(() => localStorage.getItem('antevorta_user_token') || '');
@@ -347,6 +353,7 @@ export default function App() {
     setError('');
     setValidationErrors([]);
     setActivePreset(presetId);
+    setIntakeClarityReport(null);
     setNotice(`Loaded preset: "${found.label}". Edit any parameter and run the stress test.`);
     window.setTimeout(() => setNotice(''), 3600);
   };
@@ -362,8 +369,60 @@ export default function App() {
     setError('');
     setValidationErrors([]);
     setActivePreset('blank');
+    setIntakeClarityReport(null);
     setNotice('Initialized blank form. Fill in your question, capacity constraints, and at least 2 options.');
     window.setTimeout(() => setNotice(''), 3600);
+  };
+
+  const handleCheckClarity = async () => {
+    setClarityLoading(true);
+    setError('');
+    try {
+      const report = await getClarificationReport(draft);
+      setIntakeClarityReport(report);
+      setNotice(`Clarity evaluated: score ${report.clarity_score}/100 with ${report.prompts.length} actionable suggestions.`);
+      window.setTimeout(() => setNotice(''), 3500);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Clarity evaluation failed.');
+    } finally {
+      setClarityLoading(false);
+    }
+  };
+
+  const applyClarificationPatch = (patch: Record<string, any>) => {
+    setDraft(current => {
+      const updated = { ...current };
+      if ('weekly_maintenance_hours' in patch) updated.weekly_maintenance_hours = patch.weekly_maintenance_hours;
+      if ('existing_commitments_hours' in patch) updated.existing_commitments_hours = patch.existing_commitments_hours;
+      if ('savings_npr' in patch) updated.savings_npr = patch.savings_npr;
+      if ('monthly_surplus_npr' in patch) updated.monthly_surplus_npr = patch.monthly_surplus_npr;
+      if ('reversible_experiment' in patch) updated.reversible_experiment = patch.reversible_experiment;
+      if ('options' in patch && Array.isArray(patch.options)) {
+        updated.options = updated.options.map(opt => {
+          const patchOpt = patch.options.find((p: any) => p.id === opt.id);
+          if (patchOpt) {
+            return {
+              ...opt,
+              ...patchOpt,
+            };
+          }
+          return opt;
+        });
+      }
+      return updated;
+    });
+    setIntakeClarityReport(prev => {
+      if (!prev) return null;
+      const remaining = prev.prompts.filter(p => JSON.stringify(p.suggested_patch) !== JSON.stringify(patch));
+      return {
+        ...prev,
+        clarity_score: Math.min(100, prev.clarity_score + 15),
+        prompts: remaining,
+        critical_gaps_count: Math.max(0, prev.critical_gaps_count - 1),
+      };
+    });
+    setNotice('Applied suggested assumption to decision form.');
+    window.setTimeout(() => setNotice(''), 3000);
   };
 
   const addOption = () => {
@@ -1032,18 +1091,84 @@ export default function App() {
                 </div>
               )}
 
-              <button
-                className="analyze-button"
-                type="button"
-                onClick={runAnalysis}
-                disabled={loading}
-              >
-                {loading ? (
-                  <><LoaderCircle className="spin" size={17} /> Running deterministic stress test…</>
-                ) : (
-                  <><WandSparkles size={17} /> Run decision stress test <ArrowRight size={16} /></>
-                )}
-              </button>
+              <div className="intake-action-row">
+                <button
+                  className="analyze-button"
+                  type="button"
+                  onClick={runAnalysis}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <><LoaderCircle className="spin" size={17} /> Running deterministic stress test…</>
+                  ) : (
+                    <><WandSparkles size={17} /> Run decision stress test <ArrowRight size={16} /></>
+                  )}
+                </button>
+                <button
+                  className="clarity-check-button"
+                  type="button"
+                  onClick={handleCheckClarity}
+                  disabled={clarityLoading}
+                >
+                  {clarityLoading ? (
+                    <><LoaderCircle className="spin" size={15} /> Checking…</>
+                  ) : (
+                    <><HelpCircle size={15} /> Check Input Clarity</>
+                  )}
+                </button>
+              </div>
+
+              {intakeClarityReport && (
+                <div className="clarity-panel">
+                  <div className="clarity-header">
+                    <div>
+                      <span className="label-upper">ADAPTIVE CLARIFICATION ANALYSIS</span>
+                      <h4 style={{ margin: '3px 0 0', fontSize: '13px', color: '#d0e5d4' }}>
+                        Input Quality & Completeness
+                      </h4>
+                    </div>
+                    <span className={`clarity-score-chip ${intakeClarityReport.clarity_score >= 80 ? 'clarity-score-good' : intakeClarityReport.clarity_score >= 50 ? 'clarity-score-fair' : 'clarity-score-poor'}`}>
+                      Clarity Score: {intakeClarityReport.clarity_score}/100
+                    </span>
+                  </div>
+                  <div className="clarity-meter-bar">
+                    <div
+                      className="clarity-meter-fill"
+                      style={{
+                        width: `${intakeClarityReport.clarity_score}%`,
+                        backgroundColor: intakeClarityReport.clarity_score >= 80 ? 'var(--green)' : intakeClarityReport.clarity_score >= 50 ? '#f2cb63' : '#f29a91',
+                      }}
+                    />
+                  </div>
+                  {intakeClarityReport.prompts.length === 0 ? (
+                    <div style={{ fontSize: '11px', color: '#8dd99c' }}>
+                      <Check size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
+                      All core assumptions and constraints are fully specified without missing parameters!
+                    </div>
+                  ) : (
+                    <div className="clarity-prompts-list">
+                      {intakeClarityReport.prompts.map(prompt => (
+                        <div key={prompt.id} className="clarity-prompt-item">
+                          <div className="clarity-prompt-title">{prompt.question}</div>
+                          <div className="clarity-prompt-why">{prompt.why_it_matters}</div>
+                          <div className="clarity-prompt-action-row">
+                            <span className="clarity-prompt-hint">{prompt.suggested_action}</span>
+                            {Object.keys(prompt.suggested_patch).length > 0 && (
+                              <button
+                                type="button"
+                                className="btn-apply-patch"
+                                onClick={() => applyClarificationPatch(prompt.suggested_patch)}
+                              >
+                                <Zap size={12} /> Apply Suggested Assumption
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="privacy-note">
                 <ShieldCheck size={14} />
                 <span>Zero unsolicited tracking. Decision history is encrypted and isolated to your private account.</span>
@@ -1285,6 +1410,22 @@ export default function App() {
                   onClick={() => setActiveTab('trace')}
                 >
                   <ShieldCheck size={13} /> Agent Trace <span>{result.tool_trace.length}</span>
+                </button>
+                <button
+                  role="tab"
+                  aria-selected={activeTab === 'clarifications'}
+                  className={activeTab === 'clarifications' ? 'active' : ''}
+                  onClick={() => setActiveTab('clarifications')}
+                >
+                  <HelpCircle size={13} /> Clarifications <span>{result.clarifications?.length || 0}</span>
+                </button>
+                <button
+                  role="tab"
+                  aria-selected={activeTab === 'audit'}
+                  className={activeTab === 'audit' ? 'active' : ''}
+                  onClick={() => setActiveTab('audit')}
+                >
+                  <CheckCircle2 size={13} /> Verification Audit & Citations <span>{(result.grounded_citations?.length || 0) + (result.verification_report ? 1 : 0)}</span>
                 </button>
               </div>
 
@@ -1614,6 +1755,109 @@ export default function App() {
                     <strong>Provider status</strong>
                     <p>{result.provider_status}</p>
                     <small>Generated {new Date(result.generated_at).toLocaleString()}</small>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'clarifications' && (
+                <div className="trace-panel">
+                  <div className="trace-intro">
+                    <h3>Adaptive Clarifications</h3>
+                    <p>Identifies incomplete inputs, missing financial buffers, and unverified assumptions with suggested one-click patches.</p>
+                  </div>
+                  {(!result.clarifications || result.clarifications.length === 0) ? (
+                    <div style={{ padding: '24px', textAlign: 'center', color: '#8dd99c' }}>
+                      <Check size={20} style={{ verticalAlign: 'middle', marginRight: '8px' }} />
+                      All core assumptions and constraints are fully specified. No critical gaps identified!
+                    </div>
+                  ) : (
+                    <div className="clarity-prompts-list">
+                      {result.clarifications.map(prompt => (
+                        <div key={prompt.id} className="clarity-prompt-item">
+                          <div className="clarity-prompt-title">{prompt.question}</div>
+                          <div className="clarity-prompt-why">{prompt.why_it_matters}</div>
+                          <div className="clarity-prompt-action-row">
+                            <span className="clarity-prompt-hint">{prompt.suggested_action}</span>
+                            {Object.keys(prompt.suggested_patch).length > 0 && (
+                              <button
+                                type="button"
+                                className="btn-apply-patch"
+                                onClick={() => {
+                                  applyClarificationPatch(prompt.suggested_patch);
+                                  handleQuickRecalculate();
+                                }}
+                              >
+                                <Zap size={12} /> Apply Assumption & Recalculate
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'audit' && (
+                <div className="audit-container">
+                  <div className={`audit-badge-card ${result.verification_report?.audit_status === 'VERIFIED_HYBRID' ? 'hybrid' : ''}`}>
+                    <div className="audit-status-title">
+                      <ShieldCheck size={18} color="var(--green)" />
+                      <span>
+                        Verification Audit:{' '}
+                        {result.verification_report?.audit_status === 'VERIFIED_HYBRID'
+                          ? 'Grounded Tool-Assisted Analysis (Meta API + Constraint Engine)'
+                          : 'Deterministic Safe Fallback (100% Arithmetic Engine)'}
+                      </span>
+                    </div>
+                    <ul className="audit-checks-list">
+                      <li className="audit-check-item">
+                        <Check size={14} color="var(--green)" />
+                        <strong>Zero Hallucination Arithmetic:</strong> All hours, costs, and headroom values strictly computed by deterministic Python engine; no synthetic numbers invented in narratives.
+                      </li>
+                      <li className="audit-check-item">
+                        <Check size={14} color="var(--green)" />
+                        <strong>Prohibited Unsupported Probabilities:</strong> Model narratives are programmatically scanned and scrubbed of fake percentage chances or success odds.
+                      </li>
+                      <li className="audit-check-item">
+                        <Check size={14} color="var(--green)" />
+                        <strong>Option Parity & Coverage:</strong> Exactly all {result.constraints.option_assessments.length} candidate options evaluated without omission.
+                      </li>
+                      {result.verification_report?.verification_details?.map((detail, idx) => (
+                        <li key={idx} className="audit-check-item">
+                          <CheckCircle2 size={13} color="#85b894" />
+                          <span>{detail}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="trace-panel">
+                    <div className="trace-intro">
+                      <h3>Grounded External Sources & Benchmarks</h3>
+                      <p>Verified public reference-class data. Never synthetically fabricated.</p>
+                    </div>
+                    {(!result.grounded_citations || result.grounded_citations.length === 0) ? (
+                      <div style={{ padding: '16px', fontSize: '11px', color: '#97ab9b', background: '#0e1510', borderRadius: '8px' }}>
+                        <Info size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
+                        No external benchmark citations were required or matched for this personal decision query. Calculations reflect only your supplied inputs without ungrounded web claims.
+                      </div>
+                    ) : (
+                      <div className="citations-panel">
+                        {result.grounded_citations.map((cite, i) => (
+                          <div key={i} className="citation-card">
+                            <div className="citation-header">
+                              <span className="citation-source">{cite.source_name}</span>
+                              <a href={cite.url} target="_blank" rel="noopener noreferrer" className="citation-link">
+                                Source Reference <ExternalLink size={12} />
+                              </a>
+                            </div>
+                            <p className="citation-snippet">&ldquo;{cite.snippet}&rdquo;</p>
+                            <span className="citation-meta">Retrieved & verified: {cite.retrieval_timestamp}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

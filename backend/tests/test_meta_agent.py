@@ -178,3 +178,33 @@ def test_agent_refuses_to_complete_without_tool_calls(monkeypatch):
     with pytest.raises(meta_agent.MetaAgentError) as excinfo:
         meta_agent.run_meta_agent(request, report)
     assert "did not complete a valid tool-assisted analysis" in str(excinfo.value)
+
+
+def test_agent_recovers_via_critique_after_invalid_draft(monkeypatch):
+    request = make_request()
+    report = assess_decision(request)
+    calls = [
+        SimpleNamespace(id="call-1", function=SimpleNamespace(name="compare_options", arguments="{}")),
+    ]
+    invalid_narrative = build_fallback_narrative(request, report).model_copy(update={
+        "summary": "This path has an 85% probability of success."
+    })
+    valid_narrative = build_fallback_narrative(request, report).model_copy(update={
+        "summary": "This path presents conditional tradeoffs based on the tool results."
+    })
+    FakeOpenAI.responses = [
+        response(FakeMessage(tool_calls=calls)),
+        response(FakeMessage(content="")),
+        response(FakeMessage(content=invalid_narrative.model_dump_json())),
+        response(FakeMessage(content=valid_narrative.model_dump_json())),
+    ]
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+    monkeypatch.setattr(meta_agent, "MODEL_API_KEY", "test-key")
+
+    actual, trace, status = meta_agent.run_meta_agent(request, report)
+    assert isinstance(actual, DecisionNarrative)
+    assert actual.summary == "This path presents conditional tradeoffs based on the tool results."
+    assert "critique recovery" in status
+    verifier_items = [t for t in trace if t.tool == "scenario_verifier"]
+    assert any(t.status == "blocked" for t in verifier_items)
+    assert any(t.status == "completed" and "self-corrected" in t.detail for t in verifier_items)

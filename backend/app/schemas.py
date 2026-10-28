@@ -113,6 +113,39 @@ class ToolTraceItem(StrictModel):
     detail: str = Field(max_length=500)
 
 
+class ClarificationPrompt(StrictModel):
+    id: str
+    field_target: str
+    option_id: str | None = None
+    question: str
+    why_it_matters: str
+    suggested_action: str
+    suggested_patch: dict[str, Any] = Field(default_factory=dict)
+
+
+class ClarificationReport(StrictModel):
+    clarity_score: int = Field(ge=0, le=100)
+    critical_gaps_count: int
+    prompts: list[ClarificationPrompt]
+
+
+class VerifiedCitation(StrictModel):
+    source_name: str
+    url: str
+    retrieval_timestamp: str
+    snippet: str
+    verified: bool
+    query: str
+
+
+class VerificationReport(StrictModel):
+    all_options_covered: bool
+    zero_hallucination_arithmetic_passed: bool
+    unsupported_probabilities_prohibited: bool
+    audit_status: Literal["VERIFIED_DETERMINISTIC", "VERIFIED_HYBRID", "FALLBACK_SAFE"]
+    verification_details: list[str] = Field(default_factory=list)
+
+
 class AnalysisResponse(StrictModel):
     generated_at: str
     analysis_mode: Literal["meta_agent", "deterministic_fallback"]
@@ -123,6 +156,9 @@ class AnalysisResponse(StrictModel):
     narrative: DecisionNarrative
     tool_trace: list[ToolTraceItem]
     verifier_status: Literal["passed", "fallback", "rejected"]
+    clarifications: list[ClarificationPrompt] = Field(default_factory=list)
+    verification_report: VerificationReport | None = None
+    grounded_citations: list[VerifiedCitation] = Field(default_factory=list)
 
 
 

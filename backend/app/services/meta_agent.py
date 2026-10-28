@@ -180,7 +180,34 @@ def run_meta_agent(request: DecisionInput, report: ConstraintReport) -> tuple[De
                     detail="Required option coverage and unsupported-probability checks passed.",
                 ))
                 return narrative, trace, f"Meta API call completed; model={META_MODEL_ID}; tool_calls={tool_call_count}."
-            trace.append(ToolTraceItem(tool="scenario_verifier", status="blocked", detail=reason))
+
+            # Self-healing critique turn: give the model actionable feedback to recover
+            trace.append(ToolTraceItem(tool="scenario_verifier", status="blocked", detail=f"Draft rejected: {reason}. Requesting self-correction."))
+            critique_messages = messages + [
+                {"role": "assistant", "content": raw_content},
+                {"role": "user", "content": f"CRITIQUE: Your proposed narrative was rejected: {reason}. You must fix this immediately. Remember: NEVER invent numbers not in the inputs or tool reports, NEVER mention probabilities or percentages, and cover each option ID once. Return only a valid JSON DecisionNarrative."},
+            ]
+            try:
+                retry_response = client.chat.completions.create(
+                    model=META_MODEL_ID,
+                    messages=critique_messages,
+                    response_format={"type": "json_object"},
+                    temperature=0.1,
+                    max_tokens=1800,
+                )
+                retry_cleaned = _clean_json_content(retry_response.choices[0].message.content or "")
+                retry_narrative = DecisionNarrative.model_validate_json(retry_cleaned)
+                retry_ok, retry_reason = validate_narrative(retry_narrative, request, report)
+                if retry_ok:
+                    trace.append(ToolTraceItem(
+                        tool="scenario_verifier",
+                        status="completed",
+                        detail="Agent self-corrected and passed verification after critique feedback.",
+                    ))
+                    return retry_narrative, trace, f"Meta API call completed with critique recovery; model={META_MODEL_ID}; tool_calls={tool_call_count}."
+                trace.append(ToolTraceItem(tool="scenario_verifier", status="failed", detail=f"Self-correction failed: {retry_reason}."))
+            except Exception as retry_exc:
+                trace.append(ToolTraceItem(tool="scenario_verifier", status="failed", detail=f"Critique recovery attempt failed: {type(retry_exc).__name__}."))
         except Exception as exc:
             trace.append(ToolTraceItem(
                 tool="scenario_verifier",
