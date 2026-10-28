@@ -135,3 +135,38 @@ def test_recalculate_endpoint_rejects_invalid_overrides():
     }
     response = client.post("/api/recalculate", json=body)
     assert response.status_code == 422
+
+
+def test_analyze_rejects_fewer_than_two_options():
+    p = payload()
+    p["options"] = [p["options"][0]]  # only 1 option
+    response = client.post("/api/analyze", json=p)
+    assert response.status_code == 422
+
+
+def test_analyze_rejects_more_than_three_options():
+    p = payload()
+    p["options"].append({"id": "option_three", "name": "Option 3", "required_hours_per_week": 10})
+    p["options"].append({"id": "option_four", "name": "Option 4", "required_hours_per_week": 10})
+    response = client.post("/api/analyze", json=p)
+    assert response.status_code == 422
+
+
+def test_cors_headers_configured():
+    response = client.options("/api/health", headers={
+        "Origin": "http://localhost:5173",
+        "Access-Control-Request-Method": "GET",
+    })
+    assert response.status_code == 200
+    assert "access-control-allow-origin" in response.headers
+
+
+def test_extreme_boundary_hours_handled_as_capacity_conflict():
+    p = payload()
+    p["weekly_maintenance_hours"] = 120.0
+    p["existing_commitments_hours"] = 60.0  # 120 + 60 = 180 > 168 hours in a week
+    response = client.post("/api/analyze", json=p)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["constraints"]["weekly_capacity_hours"] == -12.0
+    assert body["constraints"]["overall_status"] == "CONFLICT"
