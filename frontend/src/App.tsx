@@ -1092,7 +1092,7 @@ export default function App() {
               </div>
 
               {capacityExhausted && (
-                <div className="notice-box" style={{ background: '#261715', borderColor: '#683f3a', color: '#f2a6a0' }}>
+                <div className="notice-box" style={{ background: 'var(--rose-bg)', borderColor: 'var(--rose-border)', color: 'var(--rose)' }}>
                   <CircleAlert size={16} />
                   <span>
                     Warning: Maintenance ({draft.weekly_maintenance_hours}h) + commitments ({draft.existing_commitments_hours}h) ={' '}
@@ -1298,7 +1298,7 @@ export default function App() {
                   <div className="clarity-header">
                     <div>
                       <span className="label-upper">ADAPTIVE CLARIFICATION ANALYSIS</span>
-                      <h4 style={{ margin: '3px 0 0', fontSize: '13px', color: '#d0e5d4' }}>
+                      <h4 style={{ margin: '3px 0 0', fontSize: '13px', color: 'var(--text-primary)' }}>
                         Input Quality & Completeness
                       </h4>
                     </div>
@@ -1311,12 +1311,12 @@ export default function App() {
                       className="clarity-meter-fill"
                       style={{
                         width: `${intakeClarityReport.clarity_score}%`,
-                        backgroundColor: intakeClarityReport.clarity_score >= 80 ? 'var(--green)' : intakeClarityReport.clarity_score >= 50 ? '#f2cb63' : '#f29a91',
+                        backgroundColor: intakeClarityReport.clarity_score >= 80 ? 'var(--emerald)' : intakeClarityReport.clarity_score >= 50 ? 'var(--amber)' : 'var(--rose)',
                       }}
                     />
                   </div>
                   {intakeClarityReport.prompts.length === 0 ? (
-                    <div style={{ fontSize: '11px', color: '#8dd99c' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--emerald)' }}>
                       <Check size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
                       All core assumptions and constraints are fully specified without missing parameters!
                     </div>
@@ -1459,7 +1459,7 @@ export default function App() {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button
                   className="export-button"
-                  style={{ background: '#1c2e21', borderColor: 'var(--green)', color: 'var(--green)' }}
+                  style={{ background: 'var(--emerald-bg)', borderColor: 'var(--emerald-border)', color: 'var(--emerald)' }}
                   onClick={handleSaveToHistory}
                   type="button"
                 >
@@ -1516,7 +1516,7 @@ export default function App() {
               )}
 
               <div className="provenance-legend">
-                <span style={{ fontWeight: 600, color: '#c3d4c6' }}><Info size={13} /> Claim Provenance:</span>
+                <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}><Info size={13} /> Claim Provenance:</span>
                 <span><span className="prov-badge prov-fact">USER FACT</span> Direct user input</span>
                 <span><span className="prov-badge prov-calc">MATH CALC</span> Pure deterministic arithmetic</span>
                 <span><span className="prov-badge prov-scenario">SCENARIO</span> Conditional model synthesis</span>
@@ -1753,7 +1753,7 @@ export default function App() {
                         {recalcLoading ? <LoaderCircle className="spin" size={13} /> : <Zap size={13} />} Test What-If Overrides
                       </button>
                     </div>
-                    <p style={{ margin: '0 0 14px', fontSize: '11px', color: '#97aba0' }}>
+                    <p style={{ margin: '0 0 14px', fontSize: '11px', color: 'var(--text-muted)' }}>
                       Change personal baseline assumptions below to see instant deterministic recalculation and headroom delta.
                     </p>
                     <div className="sandbox-grid">
@@ -1827,7 +1827,7 @@ export default function App() {
                                       {(delta.time_headroom_delta_hours || 0) >= 0 ? `+${delta.time_headroom_delta_hours}h` : `${delta.time_headroom_delta_hours}h`}
                                     </span>
                                     {delta.status_changed && (
-                                      <span style={{ marginLeft: 6, color: '#f0b094' }}>
+                                      <span style={{ marginLeft: 6, color: 'var(--rose)' }}>
                                         ({delta.previous_status} → {delta.updated_status})
                                       </span>
                                     )}
@@ -1871,33 +1871,33 @@ export default function App() {
                   </div>
 
                   {/* Person Model (L3) & Revealed Divergence */}
-                  <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #233829' }}>
+                  <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <UserCheck size={16} />
                         <h4 style={{ margin: 0, fontSize: 14 }}>Person Model (L3 Claims & Exponential Time Decay)</h4>
                       </div>
-                      <span style={{ fontSize: 10, color: '#889f8f', fontStyle: 'italic' }}>
+                      <span style={{ fontSize: 10, color: 'var(--text-muted)', fontStyle: 'italic' }}>
                         Half-life decay: w(t) = 0.5^(Δt / 30d)
                       </span>
                     </div>
-                    <p style={{ fontSize: 11, color: '#97aba0', margin: '0 0 16px' }}>
+                    <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 16px' }}>
                       Longitudinal stated preferences and observed behavioral claims. Claims decay exponentially over time unless reaffirmed, and divergence triggers reflective calibration alerts.
                     </p>
 
                     {claimDivergences.length > 0 && (
-                      <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
                         {claimDivergences.map((div, i) => (
-                          <div key={i} style={{ padding: 12, background: '#2a1b18', border: '1px solid #703d36', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div key={i} style={{ padding: 14, background: 'var(--amber-bg)', border: '1px solid var(--amber-border)', borderRadius: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <span className="prov-badge prov-unknown">DIVERGENCE</span>
-                                <strong style={{ fontSize: 12, color: '#fca5a5' }}>{div.title}</strong>
+                                <strong style={{ fontSize: 13, color: 'var(--amber)' }}>{div.title}</strong>
                               </div>
-                              <div style={{ fontSize: 11, color: '#e2d4cf', marginTop: 4 }}>
+                              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
                                 Stated: {div.stated_description} vs Revealed: {div.revealed_description} (Δ: {(div.divergence_score * 100).toFixed(0)}%)
                               </div>
-                              <div style={{ fontSize: 10, color: '#bfa7a1', marginTop: 2 }}>{div.recommended_inquiry}</div>
+                              <div style={{ fontSize: 11, color: 'var(--amber)', marginTop: 2 }}>{div.recommended_inquiry}</div>
                             </div>
                           </div>
                         ))}
@@ -1905,26 +1905,26 @@ export default function App() {
                     )}
 
                     {userClaims.length === 0 ? (
-                      <div style={{ padding: 16, background: '#101a14', borderRadius: 8, fontSize: 11, color: '#889f8f', textAlign: 'center' }}>
+                      <div style={{ padding: 18, background: 'rgba(15, 23, 42, 0.6)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
                         No persistent claims saved yet. Sign in to track longitudinal calibration and personality decay.
                       </div>
                     ) : (
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
                         {userClaims.map(claim => (
-                          <div key={claim.id} style={{ padding: 12, background: '#121e16', border: '1px solid #233a2a', borderRadius: 8 }}>
+                          <div key={claim.id} style={{ padding: 14, background: 'rgba(15, 23, 42, 0.75)', border: '1px solid var(--border)', borderRadius: 12 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                              <span style={{ fontSize: 10, color: '#8dd99c', textTransform: 'uppercase', fontWeight: 600 }}>{claim.domain}</span>
-                              <span style={{ fontSize: 10, color: '#889f8f' }}>Weight: {(claim.effective_support * 100).toFixed(0)}%</span>
+                              <span style={{ fontSize: 10, color: 'var(--accent)', textTransform: 'uppercase', fontWeight: 700 }}>{claim.domain}</span>
+                              <span style={{ fontSize: 10, color: 'var(--text-muted)', font: '10px var(--mono)' }}>Weight: {(claim.effective_support * 100).toFixed(0)}%</span>
                             </div>
-                            <p style={{ fontSize: 11, color: '#e5ece7', margin: '0 0 8px' }}>{claim.predicate}: {claim.object}</p>
-                            <div style={{ background: '#1c2e22', height: 4, borderRadius: 2, overflow: 'hidden', marginBottom: 8 }}>
-                              <div style={{ width: `${claim.effective_support * 100}%`, height: '100%', background: '#34d399' }} />
+                            <p style={{ fontSize: 12, color: 'var(--text-primary)', margin: '0 0 10px', lineHeight: 1.5 }}>{claim.predicate}: {claim.object}</p>
+                            <div style={{ background: 'rgba(148, 163, 184, 0.12)', height: 5, borderRadius: 99, overflow: 'hidden', marginBottom: 10 }}>
+                              <div style={{ width: `${claim.effective_support * 100}%`, height: '100%', background: 'linear-gradient(90deg, var(--accent) 0%, var(--emerald) 100%)' }} />
                             </div>
-                            <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                               <button
                                 type="button"
                                 className="text-button"
-                                style={{ padding: '2px 8px', fontSize: 10 }}
+                                style={{ padding: '3px 10px', fontSize: 10 }}
                                 onClick={async () => {
                                   if (userToken) {
                                     await disputeClaim(userToken, claim.id);
@@ -1937,7 +1937,7 @@ export default function App() {
                               <button
                                 type="button"
                                 className="text-button"
-                                style={{ padding: '2px 8px', fontSize: 10, color: '#f87171' }}
+                                style={{ padding: '3px 10px', fontSize: 10, borderColor: 'var(--rose-border)', color: 'var(--rose-light)', background: 'var(--rose-bg)' }}
                                 onClick={async () => {
                                   if (userToken) {
                                     await excludeClaim(userToken, claim.id);
@@ -2043,7 +2043,7 @@ export default function App() {
                     <p>Identifies incomplete inputs, missing financial buffers, and unverified assumptions with suggested one-click patches.</p>
                   </div>
                   {(!result.clarifications || result.clarifications.length === 0) ? (
-                    <div style={{ padding: '24px', textAlign: 'center', color: '#8dd99c' }}>
+                    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--emerald)' }}>
                       <Check size={20} style={{ verticalAlign: 'middle', marginRight: '8px' }} />
                       All core assumptions and constraints are fully specified. No critical gaps identified!
                     </div>
@@ -2102,7 +2102,7 @@ export default function App() {
                       </li>
                       {result.verification_report?.verification_details?.map((detail, idx) => (
                         <li key={idx} className="audit-check-item">
-                          <CheckCircle2 size={13} color="#85b894" />
+                          <CheckCircle2 size={13} color="var(--emerald)" />
                           <span>{detail}</span>
                         </li>
                       ))}
@@ -2115,7 +2115,7 @@ export default function App() {
                       <p>Verified public reference-class data. Never synthetically fabricated.</p>
                     </div>
                     {(!result.grounded_citations || result.grounded_citations.length === 0) ? (
-                      <div style={{ padding: '16px', fontSize: '11px', color: '#97ab9b', background: '#0e1510', borderRadius: '8px' }}>
+                      <div style={{ padding: '16px', fontSize: '11px', color: 'var(--text-muted)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px' }}>
                         <Info size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
                         No external benchmark citations were required or matched for this personal decision query. Calculations reflect only your supplied inputs without ungrounded web claims.
                       </div>
@@ -2155,41 +2155,41 @@ export default function App() {
                       {dagLoading ? <LoaderCircle size={12} className="spin" /> : <RefreshCw size={12} />} Refresh DAG
                     </button>
                   </div>
-                  <p style={{ margin: '0 0 14px', fontSize: '11px', color: '#97aba0' }}>
+                  <p style={{ margin: '0 0 14px', fontSize: '11px', color: 'var(--text-muted)' }}>
                     Topological breakdown of your decision problem: root decision &rarr; candidate options &rarr; prerequisites &rarr; constraints &rarr; simulated outcomes &rarr; reversible experiment gate.
                   </p>
 
                   {dagData?.critical_bottlenecks && dagData.critical_bottlenecks.length > 0 && (
-                    <div className="dag-bottleneck-alert" style={{ marginBottom: 16, padding: '12px 16px', background: '#2d1b1a', border: '1px solid #733c38', borderRadius: 8 }}>
-                      <strong style={{ color: '#fca5a5', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-                        <CircleAlert size={14} /> Critical Bottlenecks Identified:
+                    <div className="dag-bottleneck-alert" style={{ marginBottom: 16, padding: '14px 18px', background: 'var(--rose-bg)', border: '1px solid var(--rose-border)', borderRadius: 12 }}>
+                      <strong style={{ color: 'var(--rose-light)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700 }}>
+                        <CircleAlert size={15} /> Critical Bottlenecks Identified:
                       </strong>
-                      <ul style={{ margin: '6px 0 0 18px', padding: 0, fontSize: 11, color: '#f3c4c1' }}>
+                      <ul style={{ margin: '8px 0 0 20px', padding: 0, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                         {dagData.critical_bottlenecks.map((b, i) => <li key={i}>{b}</li>)}
                       </ul>
                     </div>
                   )}
 
                   {dagLoading && !dagData ? (
-                    <div style={{ padding: 40, textAlign: 'center', color: '#8dd99c' }}>
-                      <LoaderCircle size={24} className="spin" style={{ marginBottom: 8 }} />
-                      <div>Computing topological DAG coordinates...</div>
+                    <div style={{ padding: 48, textAlign: 'center', color: 'var(--accent)' }}>
+                      <LoaderCircle size={28} className="spin" style={{ marginBottom: 10 }} />
+                      <div style={{ fontSize: 13, fontWeight: 500 }}>Computing topological DAG coordinates...</div>
                     </div>
                   ) : dagData ? (
-                    <div className="dag-container" style={{ background: '#0a100c', borderRadius: 10, border: '1px solid #203628', padding: 16, overflowX: 'auto' }}>
+                    <div className="dag-container" style={{ background: 'rgba(9, 14, 24, 0.85)', borderRadius: 14, border: '1px solid var(--border)', padding: 20, overflowX: 'auto' }}>
                       <svg viewBox="0 0 1000 650" style={{ width: '100%', minWidth: 800, height: 480, display: 'block' }}>
                         <defs>
                           <marker id="arrow-green" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399" />
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" />
                           </marker>
                           <marker id="arrow-red" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#f87171" />
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#f43f5e" />
                           </marker>
                           <marker id="arrow-yellow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                             <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24" />
                           </marker>
                           <marker id="arrow-neutral" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#4b6b55" />
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(148, 163, 184, 0.4)" />
                           </marker>
                         </defs>
 
@@ -2198,7 +2198,7 @@ export default function App() {
                           const src = dagData.nodes.find(n => n.id === edge.source);
                           const tgt = dagData.nodes.find(n => n.id === edge.target);
                           if (!src || !tgt) return null;
-                          const color = edge.status === 'active' ? '#34d399' : edge.status === 'blocked' ? '#f87171' : edge.status === 'warning' ? '#fbbf24' : '#4b6b55';
+                          const color = edge.status === 'active' ? '#10b981' : edge.status === 'blocked' ? '#f43f5e' : edge.status === 'warning' ? '#fbbf24' : 'rgba(148, 163, 184, 0.4)';
                           const markerId = edge.status === 'active' ? 'url(#arrow-green)' : edge.status === 'blocked' ? 'url(#arrow-red)' : edge.status === 'warning' ? 'url(#arrow-yellow)' : 'url(#arrow-neutral)';
                           return (
                             <g key={i}>
@@ -2211,14 +2211,15 @@ export default function App() {
                                 strokeWidth="2"
                                 strokeDasharray={edge.status === 'warning' ? '4 3' : undefined}
                                 markerEnd={markerId}
-                                opacity="0.8"
+                                opacity="0.85"
                               />
                               {edge.label && (
                                 <text
                                   x={(src.x + tgt.x) / 2}
                                   y={(src.y + tgt.y) / 2 - 6}
-                                  fill="#9ab8a3"
-                                  fontSize="9"
+                                  fill="var(--text-muted)"
+                                  fontSize="10"
+                                  fontFamily="var(--mono)"
                                   textAnchor="middle"
                                 >
                                   {edge.label}
@@ -2232,17 +2233,17 @@ export default function App() {
                         {dagData.nodes.map(node => {
                           const isRoot = node.type === 'decision';
                           const isOpt = node.type === 'option';
-                          const strokeColor = node.status === 'FEASIBLE' ? '#34d399' : node.status === 'CONFLICT' ? '#f87171' : node.status === 'PENDING' ? '#fbbf24' : node.status === 'VERIFIED' ? '#60a5fa' : '#4b6b55';
-                          const fillColor = node.status === 'CONFLICT' ? '#261514' : node.status === 'FEASIBLE' ? '#112217' : '#141d18';
-                          const width = isRoot ? 160 : isOpt ? 140 : 130;
-                          const height = isRoot ? 54 : isOpt ? 48 : 42;
+                          const strokeColor = node.status === 'FEASIBLE' ? '#10b981' : node.status === 'CONFLICT' ? '#f43f5e' : node.status === 'PENDING' ? '#fbbf24' : node.status === 'VERIFIED' ? '#38bdf8' : 'rgba(148, 163, 184, 0.3)';
+                          const fillColor = node.status === 'CONFLICT' ? 'rgba(244, 63, 94, 0.12)' : node.status === 'FEASIBLE' ? 'rgba(16, 185, 129, 0.12)' : node.status === 'VERIFIED' ? 'rgba(56, 189, 248, 0.12)' : 'rgba(15, 23, 42, 0.85)';
+                          const width = isRoot ? 164 : isOpt ? 144 : 132;
+                          const height = isRoot ? 56 : isOpt ? 50 : 44;
                           return (
                             <g key={node.id} transform={`translate(${node.x - width / 2}, ${node.y - height / 2})`}>
                               <rect
                                 width={width}
                                 height={height}
-                                rx="6"
-                                ry="6"
+                                rx="8"
+                                ry="8"
                                 fill={fillColor}
                                 stroke={strokeColor}
                                 strokeWidth={isRoot || isOpt ? '2' : '1.5'}
@@ -2250,19 +2251,21 @@ export default function App() {
                               <text
                                 x={width / 2}
                                 y="16"
-                                fill="#7da087"
+                                fill="var(--text-muted)"
                                 fontSize="8"
+                                fontFamily="var(--mono)"
                                 fontWeight="bold"
                                 textAnchor="middle"
-                                letterSpacing="0.05em"
+                                letterSpacing="0.08em"
                               >
                                 {node.type.toUpperCase()}
                               </text>
                               <text
                                 x={width / 2}
-                                y="32"
-                                fill="#f1f7f2"
-                                fontSize="10"
+                                y="33"
+                                fill="var(--text-primary)"
+                                fontSize="11"
+                                fontFamily="var(--heading)"
                                 fontWeight="600"
                                 textAnchor="middle"
                               >
@@ -2282,20 +2285,20 @@ export default function App() {
                       </svg>
 
                       {/* Legend */}
-                      <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 12, fontSize: 11, color: '#889f8f' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#34d399' }} /> Feasible Path
+                      <div style={{ display: 'flex', gap: 20, justifyContent: 'center', marginTop: 14, fontSize: 11, color: 'var(--text-muted)' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px rgba(16, 185, 129, 0.4)' }} /> Feasible Path
                         </span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#f87171' }} /> Constraint Deficit
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#f43f5e', boxShadow: '0 0 8px rgba(244, 63, 94, 0.4)' }} /> Constraint Deficit
                         </span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#fbbf24' }} /> Pending Prerequisite
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#fbbf24', boxShadow: '0 0 8px rgba(251, 191, 36, 0.4)' }} /> Pending Prerequisite
                         </span>
                       </div>
                     </div>
                   ) : (
-                    <div style={{ padding: 30, textAlign: 'center', color: '#90a595' }}>
+                    <div style={{ padding: 30, textAlign: 'center', color: 'var(--text-muted)' }}>
                       Click &quot;Refresh DAG&quot; to build the dependency tree.
                     </div>
                   )}
@@ -2320,7 +2323,7 @@ export default function App() {
                 <h3><Lock size={18} /> Sign In or Create Private Account</h3>
                 <button type="button" className="icon-button" onClick={() => setShowAuthModal(false)}><Trash2 size={14} /></button>
               </div>
-              <p style={{ fontSize: '11px', color: '#97ab9b', margin: '0 0 16px', lineHeight: 1.6 }}>
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 16px', lineHeight: 1.6 }}>
                 Antevorta uses private token authentication. Enter your email and a secret token to save decision revisions,
                 track assumption changes over time, and protect your choices.
               </p>
@@ -2361,7 +2364,7 @@ export default function App() {
                 <h3><History size={18} /> Decision History & Revisions</h3>
                 <button type="button" className="icon-button" onClick={() => setShowHistoryModal(false)}><Trash2 size={14} /></button>
               </div>
-              <p style={{ fontSize: '11px', color: '#97ab9b', margin: '0 0 14px' }}>
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 14px' }}>
                 Browse past decisions and inspect earlier versioned assumptions.
               </p>
 
@@ -2400,8 +2403,8 @@ export default function App() {
               )}
 
               {currentDecisionDetail && currentDecisionDetail.revisions.length > 1 && (
-                <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #28372d' }}>
-                  <span style={{ fontSize: '11px', color: '#90a595', fontWeight: 600 }}>Browse Versions:</span>
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>Browse Versions:</span>
                   <div className="revision-pills">
                     {currentDecisionDetail.revisions.map(rev => (
                       <button
@@ -2428,7 +2431,7 @@ export default function App() {
                 <h3><ShieldCheck size={18} /> Privacy & Data Sovereignty</h3>
                 <button type="button" className="icon-button" onClick={() => setShowPrivacyModal(false)}><Trash2 size={14} /></button>
               </div>
-              <p style={{ fontSize: '11px', color: '#97ab9b', margin: '0 0 16px', lineHeight: 1.6 }}>
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 16px', lineHeight: 1.6 }}>
                 You have full control over your personal decision records. You can download a complete JSON export of all your
                 decisions and revisions, or permanently purge your account from our database.
               </p>
@@ -2436,7 +2439,7 @@ export default function App() {
                 <button
                   type="button"
                   className="text-button"
-                  style={{ justifyContent: 'center', height: 40, width: '100%', borderColor: '#3a5441' }}
+                  style={{ justifyContent: 'center', height: 40, width: '100%', borderColor: 'var(--border)' }}
                   onClick={handleExportPrivacyData}
                 >
                   <Download size={14} /> Export All Personal Data (JSON)
@@ -2444,7 +2447,7 @@ export default function App() {
                 <button
                   type="button"
                   className="text-button"
-                  style={{ justifyContent: 'center', height: 40, width: '100%', borderColor: '#683632', color: '#f09d94', background: '#251514' }}
+                  style={{ justifyContent: 'center', height: 40, width: '100%', borderColor: 'var(--rose-border)', color: 'var(--rose)', background: 'var(--rose-bg)' }}
                   onClick={handlePurgeAccountData}
                 >
                   <Trash2 size={14} /> Permanently Purge Account & All Decisions
@@ -2461,46 +2464,46 @@ export default function App() {
           <div className="modal-backdrop" onClick={() => setShowFutureSelfModal(false)}>
             <div className="modal-window" style={{ maxWidth: 640 }} onClick={e => e.stopPropagation()}>
               <div className="modal-title-row">
-                <h3><Sparkles size={18} color="#a78bfa" /> Future Self Reflection ({futureSelfResponse?.perspective || '3 Years Out'})</h3>
+                <h3><Sparkles size={18} color="var(--violet)" /> Future Self Reflection ({futureSelfResponse?.perspective || '3 Years Out'})</h3>
                 <button type="button" className="icon-button" onClick={() => setShowFutureSelfModal(false)}><Trash2 size={14} /></button>
               </div>
               {futureSelfLoading ? (
-                <div style={{ padding: 40, textAlign: 'center', color: '#a78bfa' }}>
+                <div style={{ padding: 48, textAlign: 'center', color: 'var(--violet)' }}>
                   <LoaderCircle size={28} className="spin" style={{ marginBottom: 12 }} />
-                  <div>Synthesizing future perspective with Meta Model API...</div>
+                  <div style={{ fontSize: 13, fontWeight: 500 }}>Synthesizing future perspective with Meta Model API...</div>
                 </div>
               ) : futureSelfResponse ? (
                 <div>
-                  <div style={{ padding: '12px 16px', background: '#1a142e', border: '1px solid #43336d', borderRadius: 8, marginBottom: 16 }}>
-                    <span style={{ fontSize: 10, color: '#c4b5fd', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>THE DIALOGUE</span>
-                    <div style={{ whiteSpace: 'pre-wrap', fontSize: 12, color: '#f3e8ff', marginTop: 8, lineHeight: 1.6 }}>
+                  <div style={{ padding: '14px 18px', background: 'rgba(129, 140, 248, 0.08)', border: '1px solid rgba(129, 140, 248, 0.25)', borderRadius: 12, marginBottom: 16 }}>
+                    <span style={{ fontSize: 10, color: 'var(--violet)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, fontFamily: 'var(--mono)' }}>THE DIALOGUE</span>
+                    <div style={{ whiteSpace: 'pre-wrap', fontSize: 12, color: 'var(--text-primary)', marginTop: 8, lineHeight: 1.7, fontStyle: 'italic' }}>
                       {futureSelfResponse.dialogue_transcript}
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                    <div style={{ padding: 12, background: '#121815', border: '1px solid #28372d', borderRadius: 8 }}>
-                      <strong style={{ fontSize: 11, color: '#fca5a5' }}>Hardest Trade-off Faced:</strong>
-                      <p style={{ fontSize: 11, color: '#d1ded4', margin: '4px 0 0', lineHeight: 1.5 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+                    <div style={{ padding: 14, background: 'rgba(15, 23, 42, 0.75)', border: '1px solid var(--border)', borderRadius: 12 }}>
+                      <strong style={{ fontSize: 11, color: 'var(--rose-light)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Hardest Trade-off Faced:</strong>
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '6px 0 0', lineHeight: 1.6 }}>
                         {futureSelfResponse.hardest_tradeoff}
                       </p>
                     </div>
-                    <div style={{ padding: 12, background: '#121815', border: '1px solid #28372d', borderRadius: 8 }}>
-                      <strong style={{ fontSize: 11, color: '#93c5fd' }}>What I Wish I Had Known:</strong>
-                      <p style={{ fontSize: 11, color: '#d1ded4', margin: '4px 0 0', lineHeight: 1.5 }}>
+                    <div style={{ padding: 14, background: 'rgba(15, 23, 42, 0.75)', border: '1px solid var(--border)', borderRadius: 12 }}>
+                      <strong style={{ fontSize: 11, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>What I Wish I Had Known:</strong>
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '6px 0 0', lineHeight: 1.6 }}>
                         {futureSelfResponse.what_i_wish_i_knew}
                       </p>
                     </div>
                   </div>
 
-                  <div style={{ padding: 12, background: '#132319', border: '1px solid #2f563b', borderRadius: 8, marginBottom: 16 }}>
-                    <strong style={{ fontSize: 11, color: '#86efac' }}>Recommended Concrete Micro-Experiment:</strong>
-                    <p style={{ fontSize: 11, color: '#e5ece7', margin: '4px 0 0', lineHeight: 1.5 }}>
+                  <div style={{ padding: 14, background: 'rgba(16, 185, 129, 0.08)', border: '1px solid var(--emerald-border)', borderRadius: 12, marginBottom: 16 }}>
+                    <strong style={{ fontSize: 11, color: 'var(--emerald-light)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Recommended Concrete Micro-Experiment:</strong>
+                    <p style={{ fontSize: 12, color: 'var(--text-primary)', margin: '6px 0 0', lineHeight: 1.6 }}>
                       {futureSelfResponse.recommended_micro_experiment}
                     </p>
                   </div>
 
-                  <div style={{ fontSize: 10, color: '#889f8f', textAlign: 'center' }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-soft)', textAlign: 'center', fontStyle: 'italic' }}>
                     {futureSelfResponse.disclaimer}
                   </div>
                 </div>
@@ -2514,10 +2517,10 @@ export default function App() {
           <div className="modal-backdrop" onClick={() => setShowVoiceModal(false)}>
             <div className="modal-window" style={{ maxWidth: 580 }} onClick={e => e.stopPropagation()}>
               <div className="modal-title-row">
-                <h3><Mic size={18} color="#34d399" /> Meta Muse Voice Intake & Dilemma Parser</h3>
+                <h3><Mic size={18} color="var(--accent)" /> Meta Muse Voice Intake & Dilemma Parser</h3>
                 <button type="button" className="icon-button" onClick={() => setShowVoiceModal(false)}><Trash2 size={14} /></button>
               </div>
-              <p style={{ fontSize: 11, color: '#97aba0', margin: '0 0 14px', lineHeight: 1.5 }}>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 16px', lineHeight: 1.6 }}>
                 Speak or paste your natural language decision dilemma. Meta AI extracts your core question, candidate options, hours, and budgets directly into the mathematical model.
               </p>
               <Field label="Voice Dictation / Spoken Transcript">
@@ -2532,7 +2535,7 @@ export default function App() {
                 <button
                   type="button"
                   className="text-button"
-                  style={{ fontSize: 10, padding: '4px 8px' }}
+                  style={{ fontSize: 11, padding: '5px 10px' }}
                   onClick={() => setVoiceText("I'm deciding whether to accept a seed-stage startup founding engineer role at 55 hours per week with NPR 100,000 upfront equipment costs, or continue my stable remote enterprise job at 38 hours per week with zero upfront cost. My savings are NPR 450,000 and monthly surplus is NPR 25,000.")}
                 >
                   Paste Sample Startup vs Enterprise Dilemma
@@ -2541,7 +2544,7 @@ export default function App() {
               <button
                 type="button"
                 className="analyze-button"
-                style={{ height: 42 }}
+                style={{ height: 44 }}
                 onClick={handleVoiceParse}
                 disabled={voiceTranscribeLoading || !voiceText.trim()}
               >
@@ -2557,37 +2560,37 @@ export default function App() {
             <div className="modal-window" style={{ maxWidth: 680, maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
               <div className="modal-title-row">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Award size={18} color="#fbbf24" />
+                  <Award size={18} color="var(--amber)" />
                   <h3>Calibration Mirror (L4A & Brier Skill Score)</h3>
                 </div>
                 <button type="button" className="icon-button" onClick={() => setShowCalibrationDrawer(false)}><Trash2 size={14} /></button>
               </div>
-              <p style={{ fontSize: 11, color: '#97aba0', margin: '0 0 16px', lineHeight: 1.5 }}>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 16px', lineHeight: 1.6 }}>
                 Scientific verification: Antevorta measures genuine calibration using the <strong>Brier Skill Score (BSS)</strong>: <code>BSS = 1 - (BS_twin / BS_generic)</code>. Test whether your predictions beat the 50% baseline.
               </p>
 
               {calibrationReport && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
-                  <div style={{ padding: 12, background: '#141e17', border: '1px solid #233b2a', borderRadius: 8, textAlign: 'center' }}>
-                    <span style={{ fontSize: 10, color: '#8dd99c' }}>BRIER SCORE (TWIN)</span>
-                    <div style={{ fontSize: 18, fontWeight: 'bold', color: '#f1f7f2', marginTop: 4 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 18 }}>
+                  <div style={{ padding: 14, background: 'rgba(9, 14, 24, 0.75)', border: '1px solid var(--border)', borderRadius: 12, textAlign: 'center' }}>
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)', font: '10px var(--mono)', textTransform: 'uppercase' }}>BRIER SCORE (TWIN)</span>
+                    <div style={{ fontSize: 20, fontWeight: 'bold', color: 'var(--text-primary)', marginTop: 4, font: '700 20px var(--mono)' }}>
                       {calibrationReport.brier_twin !== null ? calibrationReport.brier_twin.toFixed(3) : 'Pending'}
                     </div>
-                    <small style={{ fontSize: 9, color: '#889f8f' }}>Lower is better (0.00 = perfect)</small>
+                    <small style={{ fontSize: 10, color: 'var(--text-soft)' }}>Lower is better (0.00 = perfect)</small>
                   </div>
-                  <div style={{ padding: 12, background: '#141e17', border: '1px solid #233b2a', borderRadius: 8, textAlign: 'center' }}>
-                    <span style={{ fontSize: 10, color: '#8dd99c' }}>BRIER SKILL SCORE</span>
-                    <div style={{ fontSize: 18, fontWeight: 'bold', color: (calibrationReport.brier_skill_score || 0) >= 0 ? '#34d399' : '#f87171', marginTop: 4 }}>
+                  <div style={{ padding: 14, background: 'rgba(9, 14, 24, 0.75)', border: '1px solid var(--border)', borderRadius: 12, textAlign: 'center' }}>
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)', font: '10px var(--mono)', textTransform: 'uppercase' }}>BRIER SKILL SCORE</span>
+                    <div style={{ fontSize: 20, fontWeight: 'bold', color: (calibrationReport.brier_skill_score || 0) >= 0 ? 'var(--emerald-light)' : 'var(--rose-light)', marginTop: 4, font: '700 20px var(--mono)' }}>
                       {calibrationReport.brier_skill_score !== null ? `${(calibrationReport.brier_skill_score * 100).toFixed(1)}%` : 'Calibrating'}
                     </div>
-                    <small style={{ fontSize: 9, color: '#889f8f' }}>Vs uncalibrated 50% generic</small>
+                    <small style={{ fontSize: 10, color: 'var(--text-soft)' }}>Vs uncalibrated 50% generic</small>
                   </div>
-                  <div style={{ padding: 12, background: '#141e17', border: '1px solid #233b2a', borderRadius: 8, textAlign: 'center' }}>
-                    <span style={{ fontSize: 10, color: '#8dd99c' }}>RESOLVED / TOTAL</span>
-                    <div style={{ fontSize: 18, fontWeight: 'bold', color: '#f1f7f2', marginTop: 4 }}>
+                  <div style={{ padding: 14, background: 'rgba(9, 14, 24, 0.75)', border: '1px solid var(--border)', borderRadius: 12, textAlign: 'center' }}>
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)', font: '10px var(--mono)', textTransform: 'uppercase' }}>RESOLVED / TOTAL</span>
+                    <div style={{ fontSize: 20, fontWeight: 'bold', color: 'var(--text-primary)', marginTop: 4, font: '700 20px var(--mono)' }}>
                       {calibrationReport.resolved_predictions} / {calibrationReport.total_predictions}
                     </div>
-                    <small style={{ fontSize: 9, color: '#889f8f' }}>
+                    <small style={{ fontSize: 10, color: 'var(--text-soft)' }}>
                       {calibrationReport.accuracy_rate !== null ? `${(calibrationReport.accuracy_rate * 100).toFixed(0)}% accuracy` : 'Awaiting resolutions'}
                     </small>
                   </div>
@@ -2595,8 +2598,8 @@ export default function App() {
               )}
 
               {/* Log New Prediction Form */}
-              <div style={{ padding: 14, background: '#0e1711', border: '1px solid #213627', borderRadius: 8, marginBottom: 16 }}>
-                <strong style={{ fontSize: 12, color: '#8dd99c', display: 'block', marginBottom: 8 }}>
+              <div style={{ padding: 16, background: 'rgba(9, 14, 24, 0.85)', border: '1px solid var(--border)', borderRadius: 12, marginBottom: 18 }}>
+                <strong style={{ fontSize: 12, color: 'var(--accent)', display: 'block', marginBottom: 10, fontWeight: 700 }}>
                   Log 14-Day Machine-Checkable Commitment
                 </strong>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -2605,20 +2608,20 @@ export default function App() {
                     value={newMilestoneText}
                     onChange={e => setNewMilestoneText(e.target.value)}
                     placeholder="Statement (e.g., 'Will spend less than 15 hours on thesis this week')"
-                    style={{ background: '#070c09', border: '1px solid #243d2c', borderRadius: 6, padding: '8px 12px', color: '#fff', fontSize: 12 }}
+                    style={{ background: 'rgba(15, 23, 42, 0.85)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 13px', color: 'var(--text-primary)', fontSize: 12 }}
                   />
                   <input
                     type="text"
                     value={newMilestoneCriteria}
                     onChange={e => setNewMilestoneCriteria(e.target.value)}
                     placeholder="Verification criterion (e.g., 'Toggl time-tracking log shows < 15.0h')"
-                    style={{ background: '#070c09', border: '1px solid #243d2c', borderRadius: 6, padding: '8px 12px', color: '#fff', fontSize: 12 }}
+                    style={{ background: 'rgba(15, 23, 42, 0.85)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 13px', color: 'var(--text-primary)', fontSize: 12 }}
                   />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <select
                       value={newMilestoneDomain}
                       onChange={e => setNewMilestoneDomain(e.target.value as any)}
-                      style={{ background: '#070c09', border: '1px solid #243d2c', borderRadius: 6, padding: '6px 10px', color: '#fff', fontSize: 11 }}
+                      style={{ background: 'rgba(15, 23, 42, 0.85)', border: '1px solid var(--border)', borderRadius: 8, padding: '7px 12px', color: 'var(--text-primary)', fontSize: 11 }}
                     >
                       <option value="follow_through">Follow-through</option>
                       <option value="schedule_boundary">Schedule boundary</option>
@@ -2629,7 +2632,7 @@ export default function App() {
                     <button
                       type="button"
                       className="analyze-button"
-                      style={{ height: 34, padding: '0 16px', fontSize: 11 }}
+                      style={{ height: 36, padding: '0 18px', fontSize: 11, marginTop: 0 }}
                       onClick={handleCreateMilestone}
                       disabled={!userToken || !newMilestoneText.trim() || !newMilestoneCriteria.trim()}
                     >
@@ -2641,31 +2644,31 @@ export default function App() {
 
               {/* Predictions List */}
               <div>
-                <strong style={{ fontSize: 12, color: '#f1f7f2', display: 'block', marginBottom: 8 }}>Active & Past Predictions</strong>
+                <strong style={{ fontSize: 13, color: 'var(--text-primary)', display: 'block', marginBottom: 10, fontWeight: 700 }}>Active & Past Predictions</strong>
                 {(!calibrationReport?.predictions || calibrationReport.predictions.length === 0) ? (
-                  <div style={{ padding: 16, background: '#101a14', borderRadius: 8, fontSize: 11, color: '#889f8f', textAlign: 'center' }}>
+                  <div style={{ padding: 18, background: 'rgba(15, 23, 42, 0.6)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
                     No predictions recorded yet. Create one above to begin calibration scoring.
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {calibrationReport.predictions.map(pred => {
                       const status = pred.resolved ? (pred.outcome ? 'CONFIRMED_TRUE' : 'CONFIRMED_FALSE') : 'PENDING';
                       return (
-                        <div key={pred.id} style={{ padding: 12, background: '#111c15', border: '1px solid #203526', borderRadius: 8 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-                            <span style={{ fontSize: 10, color: '#8dd99c', textTransform: 'uppercase', fontWeight: 600 }}>{pred.domain} · Horizon {pred.horizon_days}d</span>
+                        <div key={pred.id} style={{ padding: 14, background: 'rgba(15, 23, 42, 0.75)', border: '1px solid var(--border)', borderRadius: 12 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                            <span style={{ fontSize: 10, color: 'var(--accent)', textTransform: 'uppercase', fontWeight: 700, font: '10px var(--mono)' }}>{pred.domain} · Horizon {pred.horizon_days}d</span>
                             <span className={`prov-badge ${status === 'CONFIRMED_TRUE' ? 'prov-fact' : status === 'CONFIRMED_FALSE' ? 'prov-unknown' : 'prov-calc'}`}>
                               {status}
                             </span>
                           </div>
-                          <p style={{ fontSize: 11, color: '#e5ece7', margin: '0 0 6px' }}>{pred.statement}</p>
-                          <div style={{ fontSize: 10, color: '#889f8f', marginBottom: 8 }}>Criteria: {pred.resolution_criteria}</div>
+                          <p style={{ fontSize: 12, color: 'var(--text-primary)', margin: '0 0 8px', lineHeight: 1.5 }}>{pred.statement}</p>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 10 }}>Criteria: {pred.resolution_criteria}</div>
                           {!pred.resolved && (
                             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                               <button
                                 type="button"
                                 className="text-button"
-                                style={{ padding: '3px 10px', fontSize: 10, borderColor: '#34d399', color: '#86efac' }}
+                                style={{ padding: '4px 12px', fontSize: 11, borderColor: 'var(--emerald-border)', color: 'var(--emerald-light)', background: 'var(--emerald-bg)' }}
                                 onClick={() => handleResolveMilestone(pred.id, true)}
                               >
                                 ✓ Confirmed True
@@ -2673,7 +2676,7 @@ export default function App() {
                               <button
                                 type="button"
                                 className="text-button"
-                                style={{ padding: '3px 10px', fontSize: 10, borderColor: '#f87171', color: '#fca5a5' }}
+                                style={{ padding: '4px 12px', fontSize: 11, borderColor: 'var(--rose-border)', color: 'var(--rose-light)', background: 'var(--rose-bg)' }}
                                 onClick={() => handleResolveMilestone(pred.id, false)}
                               >
                                 ✗ Missed / False
@@ -2695,16 +2698,16 @@ export default function App() {
           <div className="modal-backdrop" onClick={() => setShowShareModal(false)}>
             <div className="modal-window" style={{ maxWidth: 620 }} onClick={e => e.stopPropagation()}>
               <div className="modal-title-row">
-                <h3><Share2 size={18} color="#34d399" /> Decision Memo Brief</h3>
+                <h3><Share2 size={18} color="var(--emerald)" /> Decision Memo Brief</h3>
                 <button type="button" className="icon-button" onClick={() => setShowShareModal(false)}><Trash2 size={14} /></button>
               </div>
-              <p style={{ fontSize: 11, color: '#97aba0', margin: '0 0 12px' }}>
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 12px' }}>
                 Structured executive brief ready to share with mentors, advisors, or on social media.
               </p>
               <textarea
                 rows={12}
                 readOnly
-                style={{ width: '100%', background: '#0a100c', border: '1px solid #233a2a', borderRadius: 8, padding: 12, color: '#c7d6cb', fontSize: 11, fontFamily: 'monospace', lineHeight: 1.5 }}
+                style={{ width: '100%', background: 'rgba(9, 14, 24, 0.95)', border: '1px solid var(--border)', borderRadius: 8, padding: 12, color: 'var(--text-secondary)', fontSize: 11, fontFamily: 'var(--font-mono)', lineHeight: 1.5 }}
                 value={`# ANTEVORTA DECISION BRIEF: ${draft.question}\nPlanning Horizon: ${result.constraints.time_horizon_months} months\nStatus: ${result.constraints.overall_status}\n\n## Evaluated Options:\n` +
                   result.constraints.option_assessments.map((a, i) => `${i + 1}. ${a.option_name}\n   - Feasibility: ${a.overall_status}\n   - Time Headroom: ${hours(a.weekly_headroom_hours)}\n   - Budget Headroom: ${money(a.projected_budget_headroom_npr)}\n   - Runway: ${a.runway_months !== null ? `${a.runway_months} mo` : 'Indefinite'}`).join('\n\n') +
                   `\n\n## Recommended Reversible Experiment:\n${result.narrative.reversible_experiment}\n\nBuilt with Antevorta & Meta Model API for #MetaAIHackathon\n"Test your decisions before you live them."`}
@@ -2730,7 +2733,7 @@ export default function App() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-button"
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', height: 40, borderColor: '#34d399', color: '#8dd99c' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', height: 40, borderColor: 'var(--border)', color: 'var(--accent)' }}
                 >
                   <Share2 size={14} /> Share on X
                 </a>
@@ -2853,11 +2856,11 @@ function AssessmentCard({
       )}
 
       {/* Future Self & Visual Day in the Life Actions */}
-      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+      <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
         <button
           type="button"
           className="text-button"
-          style={{ flex: 1, padding: '4px 8px', fontSize: 11, borderColor: '#7c3aed', color: '#c4b5fd', background: 'rgba(124, 58, 237, 0.1)' }}
+          style={{ flex: 1, padding: '6px 10px', fontSize: 11, borderColor: 'rgba(129, 140, 248, 0.4)', color: 'var(--violet)', background: 'var(--violet-bg)', borderRadius: 8 }}
           onClick={onConsultFutureSelf}
           title="Consult 3-Year Future Self powered by Meta Model API"
         >
@@ -2866,7 +2869,7 @@ function AssessmentCard({
         <button
           type="button"
           className="text-button"
-          style={{ flex: 1, padding: '4px 8px', fontSize: 11, borderColor: '#059669', color: '#6ee7b7', background: 'rgba(5, 150, 105, 0.1)' }}
+          style={{ flex: 1, padding: '6px 10px', fontSize: 11, borderColor: 'rgba(56, 189, 248, 0.4)', color: 'var(--accent)', background: 'var(--accent-glow)', borderRadius: 8 }}
           onClick={onVisualizeOption}
           disabled={visualLoading}
           title="Synthesize Day-in-the-Life Visual Preview with Meta Muse Image"
@@ -2876,17 +2879,17 @@ function AssessmentCard({
       </div>
 
       {visualScene && (
-        <div style={{ marginTop: 12, padding: 12, background: '#0e1812', border: '1px solid #23422d', borderRadius: 8 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#8dd99c', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <ImageIcon size={12} /> Day in the Life Simulation
+        <div style={{ marginTop: 14, padding: 14, background: 'rgba(15, 23, 42, 0.85)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <ImageIcon size={13} /> Day in the Life Simulation
             </span>
             <span className="prov-badge prov-scenario">MUSE IMAGE</span>
           </div>
-          <p style={{ fontSize: 11, color: '#c7d6cb', margin: '0 0 6px', lineHeight: 1.5 }}>
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 8px', lineHeight: 1.6 }}>
             {visualScene.visual_narrative}
           </p>
-          <div style={{ fontSize: 10, color: '#889f8f', fontStyle: 'italic' }}>
+          <div style={{ fontSize: 11, color: 'var(--text-soft)', fontStyle: 'italic' }}>
             Prompt: {visualScene.prompt_used.slice(0, 100)}...
           </div>
         </div>
@@ -2895,7 +2898,7 @@ function AssessmentCard({
       {assessment.verified_prerequisites && assessment.verified_prerequisites.length > 0 && (
         <div className="prereq-tags" style={{ marginBottom: 6 }}>
           {assessment.verified_prerequisites.map((item, i) => (
-            <span key={i} style={{ borderColor: '#3a6642', color: '#a2d6a9' }}>
+            <span key={i} style={{ borderColor: 'var(--emerald-border)', color: 'var(--emerald-light)', background: 'var(--emerald-bg)' }}>
               ✓ {item}
             </span>
           ))}
@@ -2904,19 +2907,19 @@ function AssessmentCard({
       {assessment.prerequisites_to_verify.length > 0 && (
         <div className="prereq-tags">
           {assessment.prerequisites_to_verify.map((item, i) => (
-            <span key={i} style={{ borderColor: '#5e4c30', color: '#dec58d' }}>
+            <span key={i} style={{ borderColor: 'var(--amber-border)', color: 'var(--amber)', background: 'var(--amber-bg)' }}>
               ⏳ Verify: {item}
             </span>
           ))}
         </div>
       )}
       {assessment.runway_months !== null && assessment.runway_months !== undefined && (
-        <div style={{ marginTop: 10, fontSize: '10px', color: '#f0ad9e' }}>
+        <div style={{ marginTop: 10, fontSize: '11px', color: 'var(--rose-light)' }}>
           ⚠️ Estimated financial runway: <strong>{assessment.runway_months} months</strong> before savings deplete.
         </div>
       )}
       {assessment.breakeven_monthly_surplus_npr !== null && assessment.breakeven_monthly_surplus_npr !== undefined && (
-        <div style={{ marginTop: 6, fontSize: '10px', color: '#a2bfa7' }}>
+        <div style={{ marginTop: 6, fontSize: '10px', color: 'var(--text-muted)' }}>
           Breakeven monthly surplus required: <strong>{money(assessment.breakeven_monthly_surplus_npr)}/mo</strong>
         </div>
       )}
