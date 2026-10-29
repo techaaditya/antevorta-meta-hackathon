@@ -1905,19 +1905,19 @@ export default function App() {
                     )}
 
                     {userClaims.length === 0 ? (
-                      <div style={{ padding: 18, background: 'rgba(15, 23, 42, 0.6)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
+                      <div style={{ padding: 18, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
                         No persistent claims saved yet. Sign in to track longitudinal calibration and personality decay.
                       </div>
                     ) : (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
                         {userClaims.map(claim => (
-                          <div key={claim.id} style={{ padding: 14, background: 'rgba(15, 23, 42, 0.75)', border: '1px solid var(--border)', borderRadius: 12 }}>
+                          <div key={claim.id} style={{ padding: 14, background: '#FFFFFF', border: '1px solid var(--border)', borderRadius: 12, boxShadow: 'var(--shadow-sm)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                               <span style={{ fontSize: 10, color: 'var(--accent)', textTransform: 'uppercase', fontWeight: 700 }}>{claim.domain}</span>
                               <span style={{ fontSize: 10, color: 'var(--text-muted)', font: '10px var(--mono)' }}>Weight: {(claim.effective_support * 100).toFixed(0)}%</span>
                             </div>
                             <p style={{ fontSize: 12, color: 'var(--text-primary)', margin: '0 0 10px', lineHeight: 1.5 }}>{claim.predicate}: {claim.object}</p>
-                            <div style={{ background: 'rgba(148, 163, 184, 0.12)', height: 5, borderRadius: 99, overflow: 'hidden', marginBottom: 10 }}>
+                            <div style={{ background: 'var(--border)', height: 5, borderRadius: 99, overflow: 'hidden', marginBottom: 10 }}>
                               <div style={{ width: `${claim.effective_support * 100}%`, height: '100%', background: 'linear-gradient(90deg, var(--accent) 0%, var(--emerald) 100%)' }} />
                             </div>
                             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -2176,20 +2176,20 @@ export default function App() {
                       <div style={{ fontSize: 13, fontWeight: 500 }}>Computing topological DAG coordinates...</div>
                     </div>
                   ) : dagData ? (
-                    <div className="dag-container" style={{ background: 'rgba(9, 14, 24, 0.85)', borderRadius: 14, border: '1px solid var(--border)', padding: 20, overflowX: 'auto' }}>
+                    <div className="dag-container" style={{ background: 'var(--surface-2)', borderRadius: 14, border: '1px solid var(--border)', padding: 20, overflowX: 'auto' }}>
                       <svg viewBox="0 0 1000 650" style={{ width: '100%', minWidth: 800, height: 480, display: 'block' }}>
                         <defs>
                           <marker id="arrow-green" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" />
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#1F6B43" />
                           </marker>
                           <marker id="arrow-red" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#f43f5e" />
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#A83428" />
                           </marker>
                           <marker id="arrow-yellow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24" />
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#A86C14" />
                           </marker>
                           <marker id="arrow-neutral" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                            <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(148, 163, 184, 0.4)" />
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#CEAB93" />
                           </marker>
                         </defs>
 
@@ -2198,7 +2198,7 @@ export default function App() {
                           const src = dagData.nodes.find(n => n.id === edge.source);
                           const tgt = dagData.nodes.find(n => n.id === edge.target);
                           if (!src || !tgt) return null;
-                          const color = edge.status === 'active' ? '#10b981' : edge.status === 'blocked' ? '#f43f5e' : edge.status === 'warning' ? '#fbbf24' : 'rgba(148, 163, 184, 0.4)';
+                          const color = edge.status === 'active' ? '#1F6B43' : edge.status === 'blocked' ? '#A83428' : edge.status === 'warning' ? '#A86C14' : '#CEAB93';
                           const markerId = edge.status === 'active' ? 'url(#arrow-green)' : edge.status === 'blocked' ? 'url(#arrow-red)' : edge.status === 'warning' ? 'url(#arrow-yellow)' : 'url(#arrow-neutral)';
                           return (
                             <g key={i}>
@@ -2233,8 +2233,8 @@ export default function App() {
                         {dagData.nodes.map(node => {
                           const isRoot = node.type === 'decision';
                           const isOpt = node.type === 'option';
-                          const strokeColor = node.status === 'FEASIBLE' ? '#10b981' : node.status === 'CONFLICT' ? '#f43f5e' : node.status === 'PENDING' ? '#fbbf24' : node.status === 'VERIFIED' ? '#38bdf8' : 'rgba(148, 163, 184, 0.3)';
-                          const fillColor = node.status === 'CONFLICT' ? 'rgba(244, 63, 94, 0.12)' : node.status === 'FEASIBLE' ? 'rgba(16, 185, 129, 0.12)' : node.status === 'VERIFIED' ? 'rgba(56, 189, 248, 0.12)' : 'rgba(15, 23, 42, 0.85)';
+                          const strokeColor = node.status === 'FEASIBLE' ? '#1F6B43' : node.status === 'CONFLICT' ? '#A83428' : node.status === 'PENDING' ? '#A86C14' : node.status === 'VERIFIED' ? '#AD8B73' : 'var(--border)';
+                          const fillColor = node.status === 'CONFLICT' ? 'var(--rose-bg)' : node.status === 'FEASIBLE' ? 'var(--emerald-bg)' : node.status === 'VERIFIED' ? 'var(--surface-2)' : '#FFFFFF';
                           const width = isRoot ? 164 : isOpt ? 144 : 132;
                           const height = isRoot ? 56 : isOpt ? 50 : 44;
                           return (
@@ -2287,13 +2287,13 @@ export default function App() {
                       {/* Legend */}
                       <div style={{ display: 'flex', gap: 20, justifyContent: 'center', marginTop: 14, fontSize: 11, color: 'var(--text-muted)' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px rgba(16, 185, 129, 0.4)' }} /> Feasible Path
+                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#1F6B43', boxShadow: '0 0 6px rgba(31, 107, 67, 0.4)' }} /> Feasible Path
                         </span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#f43f5e', boxShadow: '0 0 8px rgba(244, 63, 94, 0.4)' }} /> Constraint Deficit
+                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#A83428', boxShadow: '0 0 6px rgba(168, 52, 40, 0.4)' }} /> Constraint Deficit
                         </span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#fbbf24', boxShadow: '0 0 8px rgba(251, 191, 36, 0.4)' }} /> Pending Prerequisite
+                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#A86C14', boxShadow: '0 0 6px rgba(168, 108, 20, 0.4)' }} /> Pending Prerequisite
                         </span>
                       </div>
                     </div>
@@ -2474,21 +2474,21 @@ export default function App() {
                 </div>
               ) : futureSelfResponse ? (
                 <div>
-                  <div style={{ padding: '14px 18px', background: 'rgba(129, 140, 248, 0.08)', border: '1px solid rgba(129, 140, 248, 0.25)', borderRadius: 12, marginBottom: 16 }}>
+                  <div style={{ padding: '14px 18px', background: 'var(--violet-bg)', border: '1px solid var(--violet-border)', borderRadius: 12, marginBottom: 16 }}>
                     <span style={{ fontSize: 10, color: 'var(--violet)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, fontFamily: 'var(--mono)' }}>THE DIALOGUE</span>
-                    <div style={{ whiteSpace: 'pre-wrap', fontSize: 12, color: 'var(--text-primary)', marginTop: 8, lineHeight: 1.7, fontStyle: 'italic' }}>
+                    <div style={{ whiteSpace: 'pre-wrap', fontSize: 13, fontFamily: 'var(--editorial)', color: 'var(--text-primary)', marginTop: 8, lineHeight: 1.7, fontStyle: 'italic' }}>
                       {futureSelfResponse.dialogue_transcript}
                     </div>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
-                    <div style={{ padding: 14, background: 'rgba(15, 23, 42, 0.75)', border: '1px solid var(--border)', borderRadius: 12 }}>
-                      <strong style={{ fontSize: 11, color: 'var(--rose-light)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Hardest Trade-off Faced:</strong>
+                    <div style={{ padding: 14, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12 }}>
+                      <strong style={{ fontSize: 11, color: 'var(--rose)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Hardest Trade-off Faced:</strong>
                       <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '6px 0 0', lineHeight: 1.6 }}>
                         {futureSelfResponse.hardest_tradeoff}
                       </p>
                     </div>
-                    <div style={{ padding: 14, background: 'rgba(15, 23, 42, 0.75)', border: '1px solid var(--border)', borderRadius: 12 }}>
+                    <div style={{ padding: 14, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12 }}>
                       <strong style={{ fontSize: 11, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>What I Wish I Had Known:</strong>
                       <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '6px 0 0', lineHeight: 1.6 }}>
                         {futureSelfResponse.what_i_wish_i_knew}
@@ -2496,8 +2496,8 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div style={{ padding: 14, background: 'rgba(16, 185, 129, 0.08)', border: '1px solid var(--emerald-border)', borderRadius: 12, marginBottom: 16 }}>
-                    <strong style={{ fontSize: 11, color: 'var(--emerald-light)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Recommended Concrete Micro-Experiment:</strong>
+                  <div style={{ padding: 14, background: 'var(--emerald-bg)', border: '1px solid var(--emerald-border)', borderRadius: 12, marginBottom: 16 }}>
+                    <strong style={{ fontSize: 11, color: 'var(--emerald)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Recommended Concrete Micro-Experiment:</strong>
                     <p style={{ fontSize: 12, color: 'var(--text-primary)', margin: '6px 0 0', lineHeight: 1.6 }}>
                       {futureSelfResponse.recommended_micro_experiment}
                     </p>
@@ -2571,21 +2571,21 @@ export default function App() {
 
               {calibrationReport && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 18 }}>
-                  <div style={{ padding: 14, background: 'rgba(9, 14, 24, 0.75)', border: '1px solid var(--border)', borderRadius: 12, textAlign: 'center' }}>
+                  <div style={{ padding: 14, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, textAlign: 'center' }}>
                     <span style={{ fontSize: 10, color: 'var(--text-muted)', font: '10px var(--mono)', textTransform: 'uppercase' }}>BRIER SCORE (TWIN)</span>
                     <div style={{ fontSize: 20, fontWeight: 'bold', color: 'var(--text-primary)', marginTop: 4, font: '700 20px var(--mono)' }}>
                       {calibrationReport.brier_twin !== null ? calibrationReport.brier_twin.toFixed(3) : 'Pending'}
                     </div>
                     <small style={{ fontSize: 10, color: 'var(--text-soft)' }}>Lower is better (0.00 = perfect)</small>
                   </div>
-                  <div style={{ padding: 14, background: 'rgba(9, 14, 24, 0.75)', border: '1px solid var(--border)', borderRadius: 12, textAlign: 'center' }}>
+                  <div style={{ padding: 14, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, textAlign: 'center' }}>
                     <span style={{ fontSize: 10, color: 'var(--text-muted)', font: '10px var(--mono)', textTransform: 'uppercase' }}>BRIER SKILL SCORE</span>
-                    <div style={{ fontSize: 20, fontWeight: 'bold', color: (calibrationReport.brier_skill_score || 0) >= 0 ? 'var(--emerald-light)' : 'var(--rose-light)', marginTop: 4, font: '700 20px var(--mono)' }}>
+                    <div style={{ fontSize: 20, fontWeight: 'bold', color: (calibrationReport.brier_skill_score || 0) >= 0 ? 'var(--emerald)' : 'var(--rose)', marginTop: 4, font: '700 20px var(--mono)' }}>
                       {calibrationReport.brier_skill_score !== null ? `${(calibrationReport.brier_skill_score * 100).toFixed(1)}%` : 'Calibrating'}
                     </div>
                     <small style={{ fontSize: 10, color: 'var(--text-soft)' }}>Vs uncalibrated 50% generic</small>
                   </div>
-                  <div style={{ padding: 14, background: 'rgba(9, 14, 24, 0.75)', border: '1px solid var(--border)', borderRadius: 12, textAlign: 'center' }}>
+                  <div style={{ padding: 14, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, textAlign: 'center' }}>
                     <span style={{ fontSize: 10, color: 'var(--text-muted)', font: '10px var(--mono)', textTransform: 'uppercase' }}>RESOLVED / TOTAL</span>
                     <div style={{ fontSize: 20, fontWeight: 'bold', color: 'var(--text-primary)', marginTop: 4, font: '700 20px var(--mono)' }}>
                       {calibrationReport.resolved_predictions} / {calibrationReport.total_predictions}
@@ -2598,7 +2598,7 @@ export default function App() {
               )}
 
               {/* Log New Prediction Form */}
-              <div style={{ padding: 16, background: 'rgba(9, 14, 24, 0.85)', border: '1px solid var(--border)', borderRadius: 12, marginBottom: 18 }}>
+              <div style={{ padding: 16, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, marginBottom: 18 }}>
                 <strong style={{ fontSize: 12, color: 'var(--accent)', display: 'block', marginBottom: 10, fontWeight: 700 }}>
                   Log 14-Day Machine-Checkable Commitment
                 </strong>
@@ -2608,20 +2608,20 @@ export default function App() {
                     value={newMilestoneText}
                     onChange={e => setNewMilestoneText(e.target.value)}
                     placeholder="Statement (e.g., 'Will spend less than 15 hours on thesis this week')"
-                    style={{ background: 'rgba(15, 23, 42, 0.85)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 13px', color: 'var(--text-primary)', fontSize: 12 }}
+                    style={{ background: '#FFFFFF', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 13px', color: 'var(--text-primary)', fontSize: 12 }}
                   />
                   <input
                     type="text"
                     value={newMilestoneCriteria}
                     onChange={e => setNewMilestoneCriteria(e.target.value)}
                     placeholder="Verification criterion (e.g., 'Toggl time-tracking log shows < 15.0h')"
-                    style={{ background: 'rgba(15, 23, 42, 0.85)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 13px', color: 'var(--text-primary)', fontSize: 12 }}
+                    style={{ background: '#FFFFFF', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 13px', color: 'var(--text-primary)', fontSize: 12 }}
                   />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <select
                       value={newMilestoneDomain}
                       onChange={e => setNewMilestoneDomain(e.target.value as any)}
-                      style={{ background: 'rgba(15, 23, 42, 0.85)', border: '1px solid var(--border)', borderRadius: 8, padding: '7px 12px', color: 'var(--text-primary)', fontSize: 11 }}
+                      style={{ background: '#FFFFFF', border: '1px solid var(--border)', borderRadius: 8, padding: '7px 12px', color: 'var(--text-primary)', fontSize: 11 }}
                     >
                       <option value="follow_through">Follow-through</option>
                       <option value="schedule_boundary">Schedule boundary</option>
@@ -2646,7 +2646,7 @@ export default function App() {
               <div>
                 <strong style={{ fontSize: 13, color: 'var(--text-primary)', display: 'block', marginBottom: 10, fontWeight: 700 }}>Active & Past Predictions</strong>
                 {(!calibrationReport?.predictions || calibrationReport.predictions.length === 0) ? (
-                  <div style={{ padding: 18, background: 'rgba(15, 23, 42, 0.6)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
+                  <div style={{ padding: 18, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
                     No predictions recorded yet. Create one above to begin calibration scoring.
                   </div>
                 ) : (
@@ -2654,7 +2654,7 @@ export default function App() {
                     {calibrationReport.predictions.map(pred => {
                       const status = pred.resolved ? (pred.outcome ? 'CONFIRMED_TRUE' : 'CONFIRMED_FALSE') : 'PENDING';
                       return (
-                        <div key={pred.id} style={{ padding: 14, background: 'rgba(15, 23, 42, 0.75)', border: '1px solid var(--border)', borderRadius: 12 }}>
+                        <div key={pred.id} style={{ padding: 14, background: '#FFFFFF', border: '1px solid var(--border)', borderRadius: 12, boxShadow: 'var(--shadow-sm)' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                             <span style={{ fontSize: 10, color: 'var(--accent)', textTransform: 'uppercase', fontWeight: 700, font: '10px var(--mono)' }}>{pred.domain} · Horizon {pred.horizon_days}d</span>
                             <span className={`prov-badge ${status === 'CONFIRMED_TRUE' ? 'prov-fact' : status === 'CONFIRMED_FALSE' ? 'prov-unknown' : 'prov-calc'}`}>
@@ -2707,7 +2707,7 @@ export default function App() {
               <textarea
                 rows={12}
                 readOnly
-                style={{ width: '100%', background: 'rgba(9, 14, 24, 0.95)', border: '1px solid var(--border)', borderRadius: 8, padding: 12, color: 'var(--text-secondary)', fontSize: 11, fontFamily: 'var(--font-mono)', lineHeight: 1.5 }}
+                style={{ width: '100%', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 12, color: 'var(--text-primary)', fontSize: 11, fontFamily: 'var(--font-mono)', lineHeight: 1.5 }}
                 value={`# ANTEVORTA DECISION BRIEF: ${draft.question}\nPlanning Horizon: ${result.constraints.time_horizon_months} months\nStatus: ${result.constraints.overall_status}\n\n## Evaluated Options:\n` +
                   result.constraints.option_assessments.map((a, i) => `${i + 1}. ${a.option_name}\n   - Feasibility: ${a.overall_status}\n   - Time Headroom: ${hours(a.weekly_headroom_hours)}\n   - Budget Headroom: ${money(a.projected_budget_headroom_npr)}\n   - Runway: ${a.runway_months !== null ? `${a.runway_months} mo` : 'Indefinite'}`).join('\n\n') +
                   `\n\n## Recommended Reversible Experiment:\n${result.narrative.reversible_experiment}\n\nBuilt with Antevorta & Meta Model API for #MetaAIHackathon\n"Test your decisions before you live them."`}
@@ -2860,7 +2860,7 @@ function AssessmentCard({
         <button
           type="button"
           className="text-button"
-          style={{ flex: 1, padding: '6px 10px', fontSize: 11, borderColor: 'rgba(129, 140, 248, 0.4)', color: 'var(--violet)', background: 'var(--violet-bg)', borderRadius: 8 }}
+          style={{ flex: 1, padding: '6px 10px', fontSize: 11, borderColor: 'var(--violet-border)', color: 'var(--violet)', background: 'var(--violet-bg)', borderRadius: 8 }}
           onClick={onConsultFutureSelf}
           title="Consult 3-Year Future Self powered by Meta Model API"
         >
@@ -2869,7 +2869,7 @@ function AssessmentCard({
         <button
           type="button"
           className="text-button"
-          style={{ flex: 1, padding: '6px 10px', fontSize: 11, borderColor: 'rgba(56, 189, 248, 0.4)', color: 'var(--accent)', background: 'var(--accent-glow)', borderRadius: 8 }}
+          style={{ flex: 1, padding: '6px 10px', fontSize: 11, borderColor: 'var(--border-strong)', color: 'var(--accent)', background: 'var(--surface-2)', borderRadius: 8 }}
           onClick={onVisualizeOption}
           disabled={visualLoading}
           title="Synthesize Day-in-the-Life Visual Preview with Meta Muse Image"
@@ -2879,7 +2879,7 @@ function AssessmentCard({
       </div>
 
       {visualScene && (
-        <div style={{ marginTop: 14, padding: 14, background: 'rgba(15, 23, 42, 0.85)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: 12 }}>
+        <div style={{ marginTop: 14, padding: 14, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', borderRadius: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 6 }}>
               <ImageIcon size={13} /> Day in the Life Simulation
